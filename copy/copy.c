@@ -1,7 +1,7 @@
 #define _CAT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #define ten 100
-void copy(char* filename,char* copyfile){
+int main(char* filename,char* copyfile){
     
     FILE *original_file=fopen(filename,"r");
     FILE *copy_file=fopen(copyfile,"w");
@@ -15,8 +15,3 @@ void copy(char* filename,char* copyfile){
     fclose(original_file);
     fclose(copy_file);
 }
-int main(void)
-{
-    copy("hi.txt","hello.txt");
-}
-
