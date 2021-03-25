@@ -19,12 +19,17 @@ void merge(char *file1, char *file2, char*file3)
         fwrite(temp,sizeof(char),amount_of_char,file_after_merge);
         memset(temp,0,10);
     }
+    fclose(file_after_merge);
+    FILE* fam2=fopen(file1,"a");//뒤에 덧붙여 쓰는 모드로 다시 엶.
     while(feof(file_to_merge2)==0)
     {
         amount_of_char=fread(temp,sizeof(char),10,file_to_merge2);
-        fwrite(temp,sizeof(char),amount_of_char,file_after_merge);
+        fwrite(temp,sizeof(char),amount_of_char,fam2);
         memset(temp,0,10);
     }
+    fclose(file_to_merge1);
+    fclose(file_to_merge2);
+    fclose(fam2);
 
 }
 int main(void)
