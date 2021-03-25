@@ -4,20 +4,21 @@
 void read(char* name_of_file,int offset, int number)
 {
     FILE* ftr=fopen(name_of_file,"r");//file to read
+    fseek(ftr,0,SEEK_END);//파일의 크기 확인
+    int size_of_file=ftell(ftr);
     if(ftr==NULL)
     {
         printf("파일이 없거나 비었습니다.");
     }
-    if(number==NULL)
+    if(number>size_of_file || offset+number>size_of_file)//number만큼 데이터가 존재하지 않으면
     {
-        fseek(ftr,0,SEEK_END);
-        int size_of_file=ftell(ftr)-offset;//파일의 offset위치부터 끝까지의 크기를 입력
+        int ch_to_read=size_of_file-offset+1;//offset부터 끝까지
         char *temp;
         temp=malloc(sizeof(char)*size_of_file+1);
         fseek(ftr,offset,SEEK_SET);//파일 포인터를 offset위치로 이동
         fread(temp,size_of_file,1,ftr);
         printf("%s",temp);
-   
+        free(temp);
     }
     else
     {
@@ -25,11 +26,10 @@ void read(char* name_of_file,int offset, int number)
         fseek(ftr,offset,SEEK_SET);
         fread(temp,number,1,ftr);
         printf("%s",temp);
-   
+        free(temp);
     }
 }
 int main(void)
 {
-    read("hi.txt",3,13);
-    return -1;
+    read("hi.txt",3,20);
 }
