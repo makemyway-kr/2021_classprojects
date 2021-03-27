@@ -25,5 +25,13 @@ void insert(char* filename,int offset,char*data)
 }
 int main(void)
 {
-    insert("hi.txt",2,"2222");
+    char*filename=malloc(sizeof(char)*100);
+    scanf("%s",filename);
+    int offset=0;
+    char *data=malloc(sizeof(char)*1000);
+    scanf("%d",&offset);
+    scanf("%s",data);
+    insert(filename,offset,data);
+    free(filename);
+    free(data);
 }
