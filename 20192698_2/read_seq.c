@@ -1,12 +1,18 @@
 #include <stdio.h>
-//필요하면 header file 추가 가능
+#include <time.h>
 
 int main(int argc, char **argv)
 {
-	//
-	// 레코드 파일로부터 전체 레코들을 순차적으로 read할 때
-	// 걸리는 전체 시간을 측정하는 코드 구현
-	//
+	FILE*lenf=fopen(argv[1],"rb");
+	clock_t start,end;
+	int result=0;
+	start=clock();
+	
+
+
+	end=clock();
+	result=(int)((end-start)*1000);
+	printf("elapsed time:%d",result);
 
 	return 0;
 }
