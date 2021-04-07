@@ -1,11 +1,22 @@
 #include <stdio.h>
-// 필요하면 hearder file을 추가할 수 있음
-
+#include <string.h>
+#include <stdlib.h>
 int main(int argc, char **argv)
 {
-	//
-	// 사용자로부터 입력 받은 레코드 수만큼의 레코드를 레코드 파일에 저장하는 코드를 구현
-	//
-
+    char *record;
+    record=malloc(250);
+    record="aabcdefghdkfjdlkfjsdfjlska;jdskfljasd;fklasdlkfjasldkfjasd;lfjkasdlfkj;asdfjasldfjasd;lfjkasldkfmcedfaskdjfdslkfjdkfjalskdfj;asdfjasdlfjsdafjdsfsdfsjadkfjasdfjldsafjasd;lfkjsdalkfjsadlfkjs;adlfjsdlfjsadfjsdfjsdfsdfsdfkkkkkkkkewrwereqweqweewerrrrererrr";
+    FILE* recfile=fopen(argv[2],"wb");
+    int length=atoi(argv[1]);
+    fwrite(&length,sizeof(int),1,recfile);
+    fclose(recfile);
+    FILE* rfile=fopen(argv[2],"a");
+    int count=0;
+    while(count<argc)
+    {
+        fputs(record,rfile);
+        count++;
+    }
+    fclose(rfile);
 	return 0;
 }
