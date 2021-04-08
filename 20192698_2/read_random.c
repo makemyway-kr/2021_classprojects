@@ -2,25 +2,50 @@
 #include <sys/types.h>
 #include <time.h>
 #include <stdlib.h>
-//ÇÊ¿äÇÏ¸é header file Ãß°¡ °¡´É
+#include <string.h>
+//í•„ìš”í•˜ë©´ header file ì¶”ê°€ ê°€ëŠ¥
 
-#define SUFFLE_NUM	10000	// ÀÌ °ªÀº ¸¶À½´ë·Î ¼öÁ¤ÇÒ ¼ö ÀÖÀ½.
+#define SUFFLE_NUM	10000	// ì´ ê°’ì€ ë§ˆìŒëŒ€ë¡œ ìˆ˜ì •í•  ìˆ˜ ìˆìŒ.
 
 void GenRecordSequence(int *list, int n);
 void swap(int *a, int *b);
-// ÇÊ¿äÇÑ ÇÔ¼ö°¡ ÀÖÀ¸¸é ´õ Ãß°¡ÇÒ ¼ö ÀÖÀ½.
+// í•„ìš”í•œ í•¨ìˆ˜ê°€ ìˆìœ¼ë©´ ë” ì¶”ê°€í•  ìˆ˜ ìˆìŒ.
 
 int main(int argc, char **argv)
 {
-	int *read_order_list;
-	int num_of_records; // ·¹ÄÚµå ÆÄÀÏ¿¡ ÀúÀåµÇ¾î ÀÖ´Â ÀüÃ¼ ·¹ÄÚµåÀÇ ¼ö
+	FILE*lenf=fopen(argv[1],"rb");
+	int count_of_record[1]={};
+	fread(count_of_record,sizeof(int),1,lenf);
+	fclose(lenf);
+	int num_of_records=count_of_record[1]; 
+	int *read_order_list=malloc(sizeof(int)*num_of_records);
+	if(num_of_records>1)
+	{
+		GenRecordSequence(read_order_list, num_of_records);
+	}
 
-	// ÀÌ ÇÔ¼ö¸¦ ½ÇÇàÇÏ¸é 'read_order_list' ¹è¿­¿¡´Â ÀĞ¾î¾ß ÇÒ ·¹ÄÚµå ¹øÈ£µéÀÌ ³ª¿­µÇ¾î ÀúÀåµÊ
-	GenRecordSequence(read_order_list, num_of_records);
-
-	//
-	// 'read_order_list'¸¦ ÀÌ¿ëÇÏ¿© random ÇÏ°Ô read ÇÒ ¶§ °É¸®´Â ÀüÃ¼ ½Ã°£À» ÃøÁ¤ÇÏ´Â ÄÚµå ±¸Çö
-	//
+	FILE* readf=fopen(argv[1],"r");
+	fseek(readf,read_order_list[0]+4,SEEK_SET);
+	clock_t start,end;
+	int result=0;
+	int count=0;
+	char buff[250]={};
+	start=clock();
+	while(feof(readf)==0)
+	{
+		int c=fread(buff,250,1,readf);
+		if(c==250)
+		{
+			count++;
+		}
+		memset(buff,'\0',250);
+		fseek(readf,(read_order_list[count+1]*2)+4,SEEK_SET);
+	}
+	end=clock();
+	result=(int)((end-start)*1000);
+	printf("records:%d ",count+1);
+	printf("elapsed_time:%d",result);
+	
 
 	return 0;
 }

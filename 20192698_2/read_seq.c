@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 	end=clock();
 	result=(int)((end-start)*1000);
 	printf("records:%d ",count+1);
-	printf("elapsed time:%d",result);
+	printf("elapsed_time:%d",result);
 
 	return 0;
 }
