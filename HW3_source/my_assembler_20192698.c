@@ -28,7 +28,7 @@ int main(int args, char *arg[])
 		return -1;
 	}
 
-	make_opcode_output("output_00000000");
+	make_opcode_output("output_20192698");
 
 	/*
 	 * 추후 프로젝트에서 사용되는 부분
@@ -56,7 +56,7 @@ int main(int args, char *arg[])
 int init_my_assembler(void)
 {
 	int result;
-
+	result = 0;
 	if ((result = init_inst_file("inst.data")) < 0)
 		return -1;
 	if ((result = init_input_file("input.txt")) < 0)
@@ -79,11 +79,44 @@ int init_my_assembler(void)
  */
 int init_inst_file(char *inst_file)
 {
-	FILE *file;
+	FILE *file=fopen(inst_file,"r");
 	int errno;
-
-	/* add your code here */
-
+	errno = 0;
+	char buff[15];
+	char* temp;
+	memset(buff, "\0", 15);
+	inst_index = 0;
+	while (feof(file) == 0)
+	{
+		fgets(buff, 15, file);
+		temp = strtok(buff, "|");
+		for (int i = 0; i < 4; i++)
+		{
+			if (temp == NULL)
+			{
+				errno = -1;
+			}
+			else if (i == 0)
+			{
+				strcpy(inst_table[inst_index]->str, temp);
+			}
+			else if (i == 1)
+			{
+				inst_table[inst_index]->format = atoi(temp);
+			}
+			else if (i == 2)
+			{
+				strcpy(inst_table[inst_index]->op, temp);
+			}
+			else if (i == 3)
+			{
+				inst_table[inst_index]->ops = atoi(temp);
+			}
+			temp = strtok(NULL, "|");
+		}
+		inst_index++;
+	}
+	fclose(file);
 	return errno;
 }
 
@@ -97,10 +130,24 @@ int init_inst_file(char *inst_file)
  */
 int init_input_file(char *input_file)
 {
-	FILE *file;
+	FILE *file=fopen(input_file,"r");
 	int errno;
-
-	/* add your code here */
+	errno = 0;
+	line_num = 0;
+	char buff[100];
+	memset(buff, "\0", 100);
+	while (feof(file))
+	{
+		fgets(buff, 100, file);
+		strcpy(input_data[line_num], buff);
+		if (buff == NULL)
+		{
+			errno = -1;
+		}
+		memset(buff, "\0", 100);
+		line_num++;
+	}
+	fclose(file);
 
 	return errno;
 }
@@ -115,7 +162,15 @@ int init_input_file(char *input_file)
  */
 int token_parsing(char *str)
 {
-	/* add your code here */
+	int err = 0;
+	char* temp;
+	for (int i = 0; i < line_num; i++)
+	{
+		
+		
+
+	}
+
 }
 
 /* ----------------------------------------------------------------------------------
