@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-
+#define _CRT_SECURE_NO_WARNINGS
 #include "my_assembler_20192698.h"
 
 /* ----------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ int init_inst_file(char *inst_file)
 		fgets(buff, 15, file);
 		temp = strtok(buff, "|");
 		for (int i = 0; i < 4; i++)
-		{
+		{ 
 			if (temp == NULL)
 			{
 				errno = -1;
@@ -106,7 +106,7 @@ int init_inst_file(char *inst_file)
 			}
 			else if (i == 2)
 			{
-				strcpy(inst_table[inst_index]->op, temp);
+				inst_table[inst_index]->op = (unsigned char)strtol(temp, NULL, 16);
 			}
 			else if (i == 3)
 			{
@@ -131,6 +131,10 @@ int init_inst_file(char *inst_file)
 int init_input_file(char *input_file)
 {
 	FILE *file=fopen(input_file,"r");
+	for (int i = 0; i < MAX_LINES; i++)
+	{
+		input_data[i] = malloc(sizeof(char) * 100);
+	}
 	int errno;
 	errno = 0;
 	line_num = 0;
@@ -166,9 +170,39 @@ int token_parsing(char *str)
 	char* temp;
 	for (int i = 0; i < line_num; i++)
 	{
-		
-		
+		if (input_data[i][0] == "\t")//레이블이 없어 tab이 앞에 있는 경우
+		{
+			temp = strtok(input_data[i], "\t");
+			int count = 1;
+			while (temp != NULL)
+			{
+				if (count == 1)
+				{
+					strcpy(token_table[i]->operator,temp);
+				}
+				else if (count == 2)
+				{
+					char* t2 = strtok(temp, ",");
+					int j = 0;
+					while (t2 != NULL)
+					{
+						strcpy(token_table[i]->operand[j], t2);
+					}
+				}
+				else if (count == 3)
+				{
 
+				}
+			}
+		}
+		else if (input_data[i][0] == ".")//.으로 시작하는 경우
+		{
+
+		}
+		else//label이 존재하는 경우
+		{
+
+		}
 	}
 
 }
