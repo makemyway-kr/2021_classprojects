@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#define _CRT_SECURE_NO_WARNINGS
 #include "my_assembler_20192698.h"
 /* ----------------------------------------------------------------------------------
  * 설명 : 사용자로 부터 어셈블리 파일을 받아서 명령어의 OPCODE를 찾아 출력한다.
@@ -78,9 +79,8 @@ int init_inst_file(char *inst_file)
 {
 	FILE *file=fopen(inst_file,"r");
 	int errno;
-	errno = 0;
+	errno = -1;
 	char buff[100];
-	if (file == NULL)errno = -1;//빈 파일이면 에러발생
 	char* temp=NULL;
 	memset(buff, 0, 15);
 	inst_index = 0;
@@ -112,7 +112,6 @@ int init_inst_file(char *inst_file)
 			}
 			temp = strtok(NULL, "|");
 		}
-		printf("%s %u %d %d",inst_table[inst_index]->str, inst_table[inst_index]->op, inst_table[inst_index]->format, inst_table[inst_index]->ops);
 		inst_index++;
 		errno = 0;
 	}
