@@ -10,24 +10,22 @@ int main(int argc, char **argv)
 	int count_of_record[1]={};
 	fread(count_of_record,sizeof(int),1,lenf);
 	fclose(lenf);
-	int count=0;
 	FILE*toread=fopen(argv[1],"r");
 	fseek(toread,4,SEEK_SET);
-	start=clock();
-	char buff[250]={};
+	char buff[251]={};
+	int count=0;
+	start=clock();	
 	while(feof(toread)==0)
 	{
-		int c=fread(buff,250,1,toread);
-		if(c==250)
-		{
-			count++;
-		}
-		memset(buff,'\0',250);
+		int c=fread(buff,sizeof(char),250,toread);
+		memset(buff,0,250);
+		if (c==250)count++;
 	}
 	end=clock();
 	result=(int)((end-start)*1000);
-	printf("records:%d ",count+1);
-	printf("elapsed_time:%d",result);
+	printf("#records: %d ",count);
+	printf("elapsed_time: %d us\n",result);
+	fclose(toread);
 
 	return 0;
 }
