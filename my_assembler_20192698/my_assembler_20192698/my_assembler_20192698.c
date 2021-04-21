@@ -16,8 +16,9 @@
 #include <string.h>
 #include <fcntl.h>
 
+  // 파일명의 "00000000"은 자신의 학번으로 변경할 것.
 #include "my_assembler_20192698.h"
-token_line = 0;//토큰 저장에 사용할 line전역변수 초기화
+
 /* ----------------------------------------------------------------------------------
  * 설명 : 사용자로 부터 어셈블리 파일을 받아서 명령어의 OPCODE를 찾아 출력한다.
  * 매계 : 실행 파일, 어셈블리 파일
@@ -28,33 +29,30 @@ token_line = 0;//토큰 저장에 사용할 line전역변수 초기화
  */
 int main(int args, char* arg[])
 {
-	if (init_my_assembler() < 0)
-	{
-		printf("init_my_assembler: 프로그램 초기화에 실패 했습니다.\n");
-		return -1;
-	}
+    if (init_my_assembler() < 0)
+    {
+        printf("init_my_assembler: 프로그램 초기화에 실패 했습니다.\n");
+        return -1;
+    }
 
-	if (assem_pass1() < 0)
-	{
-		printf("assem_pass1: 패스1 과정에서 실패하였습니다.  \n");
-		return -1;
-	}
+    if (assem_pass1() < 0)
+    {
+        printf("assem_pass1: 패스1 과정에서 실패하였습니다.  \n");
+        return -1;
+    }
+    // make_opcode_output("output_00000000");
 
-	make_opcode_output("output_20192698");
+    make_symtab_output("symtab_00000000");
+    make_literaltab_output("literaltab_00000000");
+    if (assem_pass2() < 0)
+    {
+        printf(" assem_pass2: 패스2 과정에서 실패하였습니다.  \n");
+        return -1;
+    }
 
-	/*
-	 * 추후 프로젝트에서 사용되는 부분
-	 *
-	make_symtab_output("symtab_00000000");
-	if (assem_pass2() < 0)
-	{
-		printf(" assem_pass2: 패스2 과정에서 실패하였습니다.  \n");
-		return -1;
-	}
+    make_objectcode_output("output_00000000");
 
-	make_objectcode_output("output_00000000");
-	*/
-	return 0;
+    return 0;
 }
 
 /* ----------------------------------------------------------------------------------
@@ -68,13 +66,13 @@ int main(int args, char* arg[])
  */
 int init_my_assembler(void)
 {
-	int result;
+    int result;
 
-	if ((result = init_inst_file("inst.data")) < 0)
-		return -1;
-	if ((result = init_input_file("input.txt")) < 0)
-		return -1;
-	return result;
+    if ((result = init_inst_file("inst.data")) < 0)
+        return -1;
+    if ((result = init_input_file("input.txt")) < 0)
+        return -1;
+    return result;
 }
 
 /* ----------------------------------------------------------------------------------
@@ -90,52 +88,52 @@ int init_my_assembler(void)
  *
  * ----------------------------------------------------------------------------------
  */
-int init_inst_file(char* inst_file)//inst.data 입력받기.
+int init_inst_file(char* inst_file)
 {
-	FILE* inst_file_to_read = fopen(inst_file, "r");//읽어야할inst.data파일
+    FILE* inst_file_to_read = fopen(inst_file, "r");//읽어야할inst.data파일
 
-	int errno;
-	int i = 0;
-	errno = 0;//오류 잡기용
-	if (inst_file_to_read == NULL)errno = -1;
-	int dic[100];//딕셔너리에 16진수 저장해둠.
-	dic['0'] = 0;
-	dic['1'] = 1;
-	dic['2'] = 2;
-	dic['3'] = 3;
-	dic['4'] = 4;
-	dic['5'] = 5;
-	dic['6'] = 6;
-	dic['7'] = 7;
-	dic['8'] = 8;
-	dic['9'] = 9;
-	dic['A'] = 10;
-	dic['B'] = 11;
-	dic['C'] = 12;
-	dic['D'] = 13;
-	dic['E'] = 14;
-	dic['F'] = 15;
-	char st[15];
-	char o1, o2;
-	int b;
-	int d;
-	inst_index = 0;
-	while (!feof(inst_file_to_read)) {
-		inst_table[i] = malloc(sizeof(struct inst_unit));//저장공간 할당
-		inst_table[i]->str[0] = "\0";
-		inst_table[i]->op=malloc(sizeof(unsigned char));
-		inst_table[i]->format=0;
-		inst_table[i]->ops=0;
-		fscanf(inst_file_to_read,"%s %c %c %c %d",st,&b,&o1,&o2,&d);// inst로부터 입력받음
-		strcpy(inst_table[i]->str, st);// 변수에 저장
-		inst_table[i]->format = b;
-		inst_table[i]->op =(unsigned char)( dic[o1] * 16 + dic[o2]);
-		inst_table[i]->ops = d;
-		i++;
-		inst_index++;
-	}
-	fclose(inst_file_to_read);// 파일닫기
-	return errno;
+    int errno;
+    int i = 0;
+    errno = 0;//오류 잡기용
+    if (inst_file_to_read == NULL)errno = -1;
+    int dic[100];//딕셔너리에 16진수 저장해둠.
+    dic['0'] = 0;
+    dic['1'] = 1;
+    dic['2'] = 2;
+    dic['3'] = 3;
+    dic['4'] = 4;
+    dic['5'] = 5;
+    dic['6'] = 6;
+    dic['7'] = 7;
+    dic['8'] = 8;
+    dic['9'] = 9;
+    dic['A'] = 10;
+    dic['B'] = 11;
+    dic['C'] = 12;
+    dic['D'] = 13;
+    dic['E'] = 14;
+    dic['F'] = 15;
+    char st[15];
+    char o1, o2;
+    int b;
+    int d;
+    inst_index = 0;
+    while (!feof(inst_file_to_read)) {
+        inst_table[i] = malloc(sizeof(struct inst_unit));//저장공간 할당
+        inst_table[i]->str[0] = "\0";
+        inst_table[i]->op = malloc(sizeof(unsigned char));
+        inst_table[i]->format = 0;
+        inst_table[i]->ops = 0;
+        fscanf(inst_file_to_read, "%s %c %c %c %d", st, &b, &o1, &o2, &d);// inst로부터 입력받음
+        strcpy(inst_table[i]->str, st);// 변수에 저장
+        inst_table[i]->format = b;
+        inst_table[i]->op = (unsigned char)(dic[o1] * 16 + dic[o2]);
+        inst_table[i]->ops = d;
+        i++;
+        inst_index++;
+    }
+    fclose(inst_file_to_read);// 파일닫기
+    return errno;
 }
 
 /* ----------------------------------------------------------------------------------
@@ -148,25 +146,26 @@ int init_inst_file(char* inst_file)//inst.data 입력받기.
  */
 int init_input_file(char* input_file)
 {
-	int errno;
-	errno = 0;//에러 파악
-	FILE* file = fopen(input_file, "r");
-	for (int i = 0; i < MAX_LINES; i++)
-	{
-		input_data[i] = malloc(sizeof(char) * 100);
-		input_data[i][0] = "\0";
-	}
-	if (file == NULL)errno = -1;
-	line_num = 0;
-	while (!feof(file))
-	{
-		fgets(input_data[line_num], 100, file);
-		line_num++;
-	}
-	fclose(file);
+    int errno;
+    errno = 0;//에러 파악
+    FILE* file = fopen(input_file, "r");
+    for (int i = 0; i < MAX_LINES; i++)
+    {
+        input_data[i] = malloc(sizeof(char) * 100);
+        input_data[i][0] = "\0";
+    }
+    if (file == NULL)errno = -1;
+    line_num = 0;
+    while (!feof(file))
+    {
+        fgets(input_data[line_num], 100, file);
+        line_num++;
+    }
+    fclose(file);
 
-	return errno;
+    return errno;
 }
+
 
 /* ----------------------------------------------------------------------------------
  * 설명 : 소스 코드를 읽어와 토큰단위로 분석하고 토큰 테이블을 작성하는 함수이다.
@@ -178,92 +177,93 @@ int init_input_file(char* input_file)
  */
 int token_parsing(char* str)
 {
-	token_table[token_line] = malloc(sizeof(struct token_unit));//토큰구조체 배열 초기화
-	token_table[token_line]->label = malloc(sizeof(char) * 300);
-	token_table[token_line]->operator=malloc(sizeof(char) * 300);
-	token_table[token_line]->label = NULL;
-	token_table[token_line]->operator=NULL;
-	token_table[token_line]->operand[0][0] = '\0';
-	token_table[token_line]->operand[1][0] = '\0';
-	token_table[token_line]->operand[2][0] = '\0';
-	token_table[token_line]->comment[0] = '\0';
-	int err = 0;
-	if (str == NULL)
-	{
-		err = -1;
-	}
-	char* t;
+    token_table[token_line] = malloc(sizeof(struct token_unit));//토큰구조체 배열 초기화
+    token_table[token_line]->label = malloc(sizeof(char) * 300);
+    token_table[token_line]->operator=malloc(sizeof(char) * 300);
+    token_table[token_line]->label = NULL;
+    token_table[token_line]->operator=NULL;
+    token_table[token_line]->operand[0][0] = '\0';
+    token_table[token_line]->operand[1][0] = '\0';
+    token_table[token_line]->operand[2][0] = '\0';
+    token_table[token_line]->comment[0] = '\0';
+    int err = 0;
+    if (str == NULL)
+    {
+        err = -1;
+    }
+    char* t;
 
-	if (str[0] == '\t') {//label이 없을 경우
-		token_table[token_line]->label = NULL;
-		t = strtok_s(str, "\t", &str);
-		token_table[token_line]->operator=t;
-	}
-	else {//label 이 있을경우
-		t = strtok_s(str, "\t", &str);
-		token_table[token_line]->label = t;
-		if (strlen(str) > 0) {
-			t = strtok_s(str, "\t", &str);
-			t = strtok(t, "\n");
-			token_table[token_line]->operator = t;
-		}
-		else token_table[token_line]->operator = NULL;
-	}
+    if (str[0] == '\t') {//label이 없을 경우
+        token_table[token_line]->label = NULL;
+        t = strtok_s(str, "\t", &str);
+        token_table[token_line]->operator=t;
+    }
+    else {//label 이 있을경우
+        t = strtok_s(str, "\t", &str);
+        token_table[token_line]->label = t;
+        if (strlen(str) > 0) {
+            t = strtok_s(str, "\t", &str);
+            t = strtok(t, "\n");
+            token_table[token_line]->operator = t;
+        }
+        else token_table[token_line]->operator = NULL;
+    }
 
-	if (!strlen(str))
-	{
-		return 0;
-	}
-	else
-	{
-		int i;
-		int count = 0;
-		for (i = 0; i < strlen(str); i++)
-		{
-			if (str[i] == "\t")count += 1;
-			if (count == 2)break;
-		}
-		i = i + 1;
-		count = 0;
-		int c2 = 0;
-		if (str[i] != "\t")//operands 존재
-		{
-			for (i; i < strlen(str); i++)
-			{
-				if (str[i] == "\t")break;
-				else if (str[i] != ",")
-				{
-					strcpy(token_table[token_line]->operand[count][c2], str[i]);
-					c2++;
-				}
-				else if (str[i] == ",")
-				{
-					count++;
-					c2 = 0;
-				}
-			}
-			count = 0;
-			for (i = i + 1; i < strlen(str); i++)
-			{
-				strcpy(token_table[token_line]->comment[count], str[i]);
+    if (!strlen(str))
+    {
+        return 0;
+    }
+    else
+    {
+        int i;
+        int count = 0;
+        for (i = 0; i < strlen(str); i++)
+        {
+            if (str[i] == "\t")count += 1;
+            if (count == 2)break;
+        }
+        i = i + 1;
+        count = 0;
+        int c2 = 0;
+        if (str[i] != "\t")//operands 존재
+        {
+            for (i; i < strlen(str); i++)
+            {
+                if (str[i] == "\t")break;
+                else if (str[i] != ",")
+                {
+                    strcpy(token_table[token_line]->operand[count][c2], str[i]);
+                    c2++;
+                }
+                else if (str[i] == ",")
+                {
+                    count++;
+                    c2 = 0;
+                }
+            }
+            count = 0;
+            for (i = i + 1; i < strlen(str); i++)
+            {
+                strcpy(token_table[token_line]->comment[count], str[i]);
 
-				count++;
-			}
-		}
-		else if (str[i] == "\t")//operand 미존재
-		{
-			int count = 0;
-			i = i + 1;
-			for (i; i < strlen(str); i++)
-			{
-				strcpy(token_table[token_line]->comment[count], str[i]);
-				count++;
-			}
-		}
-	}
+                count++;
+            }
+        }
+        else if (str[i] == "\t")//operand 미존재
+        {
+            int count = 0;
+            i = i + 1;
+            for (i; i < strlen(str); i++)
+            {
+                strcpy(token_table[token_line]->comment[count], str[i]);
+                count++;
+            }
+        }
+    }
 
-	return err;
+    return err;
 }
+
 
 /* ----------------------------------------------------------------------------------
  * 설명 : 입력 문자열이 기계어 코드인지를 검사하는 함수이다.
@@ -275,19 +275,20 @@ int token_parsing(char* str)
  */
 int search_opcode(char* str)
 {
-	int an = -1;
-	int i = 0;
-	while(i<inst_index)
-	{
-		if (strcmp(inst_table[i]->str, str) == 0)
-		{
-			an = i;
-			break;
-		}
-		i++;
-	}
-	return an;
+    int an = -1;
+    int i = 0;
+    while (i < inst_index)
+    {
+        if (strcmp(inst_table[i]->str, str) == 0)
+        {
+            an = i;
+            break;
+        }
+        i++;
+    }
+    return an;
 }
+
 
 /* ----------------------------------------------------------------------------------
 * 설명 : 어셈블리 코드를 위한 패스1과정을 수행하는 함수이다.
@@ -304,16 +305,16 @@ int search_opcode(char* str)
 */
 static int assem_pass1(void)
 {
-	int err = 0;
-	for (int i = 0; i < line_num; i++)//token으로 쪼개줌.
-	{
-		if (token_parsing(input_data[i]) < 0)
-		{
-			err = -1;
-		}
-		token_line++;
-	}
-	return err;
+    int err = 0;
+    for (int i = 0; i < line_num; i++)//token으로 쪼개줌.
+    {
+        if (token_parsing(input_data[i]) < 0)
+        {
+            err = -1;
+        }
+        token_line++;
+    }
+    return err;
 }
 
 /* ----------------------------------------------------------------------------------
@@ -323,103 +324,72 @@ static int assem_pass1(void)
 * 반환 : 없음
 * 주의 : 만약 인자로 NULL값이 들어온다면 프로그램의 결과를 표준출력으로 보내어
 *        화면에 출력해준다.
-*        또한 과제 3번에서만 쓰이는 함수이므로 이후의 프로젝트에서는 사용되지 않는다.
+*        또한 과제 4번에서만 쓰이는 함수이므로 이후의 프로젝트에서는 사용되지 않는다.
 * -----------------------------------------------------------------------------------
 */
-void make_opcode_output(char* file_name)
+// void make_opcode_output(char *file_name)
+// {
+// 	/* add your code here */
+
+// }
+
+/* ----------------------------------------------------------------------------------
+* 설명 : 입력된 문자열의 이름을 가진 파일에 프로그램의 결과를 저장하는 함수이다.
+*        여기서 출력되는 내용은 SYMBOL별 주소값이 저장된 TABLE이다.
+* 매계 : 생성할 오브젝트 파일명
+* 반환 : 없음
+* 주의 : 만약 인자로 NULL값이 들어온다면 프로그램의 결과를 표준출력으로 보내어
+*        화면에 출력해준다.
+*
+* -----------------------------------------------------------------------------------
+*/
+void make_symtab_output(char* file_name)
 {
-	if (*file_name == NULL)//파일명이 NULL값일땐 CMD창에 출력
-	{
-		for (int i = 0; i < token_line; i++)
-		{
-			if (token_table[i]->label != NULL)
-			{
-				printf("%s", token_table[i]->label);
+    /* add your code here */
+}
 
-			}
-			printf("\t");
-			if (token_table[i]->operator!=NULL)
-			{
-				printf("%s", token_table[i]->operator);
-			}
-			printf("\t");
-			if (token_table[i]->operand[0][0] != "\0")
-			{
-				for (int j = 0; j < 3; j++)
-				{
-					if (token_table[i]->operand[j][0] != "\0")
-					{
-						printf("%s", token_table[i]->operand[j]);
-					}
+/* ----------------------------------------------------------------------------------
+* 설명 : 입력된 문자열의 이름을 가진 파일에 프로그램의 결과를 저장하는 함수이다.
+*        여기서 출력되는 내용은 LITERAL별 주소값이 저장된 TABLE이다.
+* 매계 : 생성할 오브젝트 파일명
+* 반환 : 없음
+* 주의 : 만약 인자로 NULL값이 들어온다면 프로그램의 결과를 표준출력으로 보내어
+*        화면에 출력해준다.
+*
+* -----------------------------------------------------------------------------------
+*/
+void make_literaltab_output(char* filen_ame)
+{
+    /* add your code here */
+}
 
-				}
-			}
-			printf("\t");
-			int a = -1;
-			if (token_table[i]->operator!=NULL)
-			{
-				a = search_opcode(token_table[i]->operator);
-				if (a >= 0)//opcode가 존재한다면
-				{
-					printf("%02X", inst_table[a]->op);
-				}
-				else if (strcmp("START",token_table[i]->operator)==0)
-				{
-					printf("00");
-				}
-				
-			}
-			printf("\n");
-		
-		}
-	}
-	else
-	{
-		FILE* f = fopen(file_name, "w");
+/* ----------------------------------------------------------------------------------
+* 설명 : 어셈블리 코드를 기계어 코드로 바꾸기 위한 패스2 과정을 수행하는 함수이다.
+*		   패스 2에서는 프로그램을 기계어로 바꾸는 작업은 라인 단위로 수행된다.
+*		   다음과 같은 작업이 수행되어 진다.
+*		   1. 실제로 해당 어셈블리 명령어를 기계어로 바꾸는 작업을 수행한다.
+* 매계 : 없음
+* 반환 : 정상종료 = 0, 에러발생 = < 0
+* 주의 :
+* -----------------------------------------------------------------------------------
+*/
+static int assem_pass2(void)
+{
 
-		for (int i = 0; i < token_line; i++)
-		{
-			if (token_table[i]->label != NULL)
-			{
-				fwrite(token_table[i]->label, sizeof(char) * strlen(token_table[i]->label), 1, f);
+    /* add your code here */
+}
 
-			}
-			fwrite("\t", sizeof("\t"), 1, f);
-			if (token_table[i]->operator!=NULL)
-			{
-				fwrite(token_table[i]->operator,sizeof(char) * strlen(token_table[i]->operator), 1, f);
-			}
-			fwrite("\t", sizeof("\t"), 1, f);
-			if (token_table[i]->operand[0][0] != "\0")
-			{
-				for (int j = 0; j < 3; j++)
-				{
-					if (token_table[i]->operand[j][0] != "\0")
-					{
-						fwrite(token_table[i]->operand[j], sizeof(char) * strlen(token_table[i]->operand[j]), 1, f);
-					}
-
-				}
-			}
-			fwrite("\t", sizeof("\t"), 1, f);
-			int a = -1;
-			if (token_table[i]->operator!=NULL)
-			{
-				a = search_opcode(token_table[i]->operator);
-				if (a >= 0)
-				{
-
-					fprintf(f, "%02X", inst_table[a]->op);
-				}
-				else if (strcmp("START", token_table[i]->operator) == 0)
-				{
-					fwrite("00", sizeof("00"), 1, f);
-				}
-				
-			}
-			
-			fwrite("\n", sizeof("\n"), 1, f);
-		}
-		fclose(f);
-	}
+/* ----------------------------------------------------------------------------------
+* 설명 : 입력된 문자열의 이름을 가진 파일에 프로그램의 결과를 저장하는 함수이다.
+*        여기서 출력되는 내용은 object code (프로젝트 1번) 이다.
+* 매계 : 생성할 오브젝트 파일명
+* 반환 : 없음
+* 주의 : 만약 인자로 NULL값이 들어온다면 프로그램의 결과를 표준출력으로 보내어
+*        화면에 출력해준다.
+*
+* -----------------------------------------------------------------------------------
+*/
+void make_objectcode_output(char* file_name)
+{
+    /* add your code here */
 }
