@@ -42,15 +42,15 @@ int main(int args, char* arg[])
     }
     // make_opcode_output("output_00000000");
 
-    make_symtab_output("symtab_00000000");
-    make_literaltab_output("literaltab_00000000");
+    make_symtab_output("symtab_20192698");
+    make_literaltab_output("literaltab_20192698");
     if (assem_pass2() < 0)
     {
         printf(" assem_pass2: 패스2 과정에서 실패하였습니다.  \n");
         return -1;
     }
 
-    make_objectcode_output("output_00000000");
+    make_objectcode_output("output_20192698");
 
     return 0;
 }
@@ -198,6 +198,11 @@ int token_parsing(char* str)
         t = strtok_s(str, "\t", &str);
         token_table[token_line]->operator=t;
     }
+    else if (str[0] == ".")//comment만 존재하거나 .만 찍힌 줄일 경우
+    {
+        strcpy(token_table[token_line]->comment, str);
+        str[0] = "\0";
+    }
     else {//label 이 있을경우
         t = strtok_s(str, "\t", &str);
         token_table[token_line]->label = t;
@@ -314,6 +319,11 @@ static int assem_pass1(void)
         }
         token_line++;
     }
+    for (int i = 0; i < token_line; i++)
+    {
+
+    }
+
     return err;
 }
 
