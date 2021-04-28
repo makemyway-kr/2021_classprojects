@@ -42,6 +42,7 @@ struct token_unit
     char operand[MAX_OPERAND][20];
     char comment[100];
     char nixbpe;
+    int addr;//locctr값을 모두 적어주기 위함.
 };
 
 typedef struct token_unit token;
@@ -57,7 +58,7 @@ struct symbol_unit
     char* symbol;
     int addr;
 };
-
+static int symbol_count = 0;//symbol의 갯수 저장 변수
 /*
 * 리터럴을 관리하는 구조체이다.
 * 리터럴 테이블은 리터럴의 이름, 리터럴의 위치로 구성된다.
@@ -73,9 +74,10 @@ typedef struct symbol_unit symbol;
 symbol sym_table[MAX_LINES];
 
 typedef struct literal_unit literal;
-symbol literal_table[MAX_LINES];
+literal literal_table[MAX_LINES];
 
 static int locctr;
+static int proglength = 0;//program length변수 생성.
 //--------------
 
 static char* input_file;

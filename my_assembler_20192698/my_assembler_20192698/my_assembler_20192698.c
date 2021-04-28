@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include<math.h>
 
   // 파일명의 "00000000"은 자신의 학번으로 변경할 것.
 #include "my_assembler_20192698.h"
@@ -40,10 +41,9 @@ int main(int args, char* arg[])
         printf("assem_pass1: 패스1 과정에서 실패하였습니다.  \n");
         return -1;
     }
-    // make_opcode_output("output_00000000");
 
     make_symtab_output("symtab_20192698");
-    make_literaltab_output("literaltab_20192698");
+    /*make_literaltab_output("literaltab_20192698");
     if (assem_pass2() < 0)
     {
         printf(" assem_pass2: 패스2 과정에서 실패하였습니다.  \n");
@@ -53,6 +53,7 @@ int main(int args, char* arg[])
     make_objectcode_output("output_20192698");
 
     return 0;
+    */
 }
 
 /* ----------------------------------------------------------------------------------
@@ -282,15 +283,33 @@ int search_opcode(char* str)
 {
     int an = -1;
     int i = 0;
-    while (i < inst_index)
+    if (str[0] == "+" && str!=NULL)
     {
-        if (strcmp(inst_table[i]->str, str) == 0)
+        char* nstr = malloc(sizeof(str) - sizeof(char));
+        strcpy(nstr, str);
+        while (i < inst_index)
         {
-            an = i;
-            break;
+            if (strcmp(inst_table[i]->str, nstr) == 0)
+            {
+                an = i;
+                break;
+            }
+            i++;
         }
-        i++;
     }
+    else if(str!=NULL)
+    {
+        while (i < inst_index)
+        {
+            if (strcmp(inst_table[i]->str, str) == 0)
+            {
+                an = i;
+                break;
+            }
+            i++;
+        }
+    }
+ 
     return an;
 }
 
@@ -311,19 +330,97 @@ int search_opcode(char* str)
 static int assem_pass1(void)
 {
     int err = 0;
+    locctr = 0;
+    token_line = 0;
+    int sttadd = 0;
     for (int i = 0; i < line_num; i++)//token으로 쪼개줌.
     {
-        if (token_parsing(input_data[i]) < 0)
+        err = token_parsing(input_data[i]);//token화함.
+        if (token_line == 0)//처음 loccation저장,10진수로 바꿔 저장함.
         {
-            err = -1;
+            locctr = strtol(token_table[token_line]->operator[0], NULL, 16);
+            sttadd = locctr;
+        }
+        else if(token_table[token_line]->label!=NULL)
+        {
+            if (input_data[i][0] != ".")
+            {
+                token_table[token_line]->addr = locctr;
+            }
+            if (symbol_count != 0)
+            {
+                for (int j = 0; j < symbol_count; j++)
+                {
+                    if (strcmp(token_table[token_line]->label, sym_table[j].symbol) == 0)
+                    {
+                        err = -1;//error
+                        break;
+                    }
+                }
+                if (err == 0)
+                {
+                    sym_table[symbol_count].symbol = malloc(sizeof(char) * 80);
+                    sym_table[symbol_count].symbol = NULL;
+                    strcpy(sym_table[symbol_count].symbol, token_table[token_line]->label);
+                    sym_table[symbol_count].addr = locctr;
+                    symbol_count++;
+                }
+            }
+        }
+        if (token_table[token_line]->operator!=NULL)
+        {
+            if (search_opcode(token_table[token_line]->operator) != -1)
+            {
+                locctr += 3;
+            }
+            else if (strcmp(token_table[token_line]->operator,"WORD") == 0)
+            {
+                locctr += 3;
+            }
+            else if (strcmp(token_table[token_line]->operator,"RESW") == 0)
+            {
+                locctr += (3 * (int)(token_table[token_line]->operand[0]));
+            }
+            else if (strcmp(token_table[token_line]->operator,"RESB") == 0)
+            {
+                locctr += atoi(token_table[token_line]->operand[0]);
+            }
+            else if (strcmp(token_table[token_line]->operator,"BYTE") == 0)
+            {
+                int s = 0;
+                int e = 0;
+                int count = 0;
+                //byte constant의 길이를 구할것임.
+                for (int k = 0; k < strlen(token_table[token_line]->operand[0]); k++)
+                {
+                    if (token_table[token_line]->operand[0][k] == "'" && count == 0)
+                    {
+                        s = k;
+                        count++;
+                    }
+                    else if (token_table[token_line]->operand[0][k] == "'" && count == 1)
+                    {
+                        e = k;
+                        count++;
+                    }
+                }
+                char* numbbb = malloc(sizeof(char) * (e - s));
+                count = 0;
+                for (int k = s + 1; k < e; k++)
+                {
+                    numbbb[count] = token_table[token_line]->operand[0][k];
+                }
+                int nuk = strtol(numbbb, NULL, 16);
+                locctr += (nuk / (int)pow(2.0, 8.0)) + 1;//2^8으로 나눈 몫 +1을 하여 length(byte수)를 구함.
+            }
+            else
+            {
+                err = -1;
+            }
         }
         token_line++;
     }
-    for (int i = 0; i < token_line; i++)
-    {
-
-    }
-
+    proglength = locctr - sttadd;//프로그램 길이 저장.
     return err;
 }
 
@@ -336,12 +433,6 @@ static int assem_pass1(void)
 *        화면에 출력해준다.
 *        또한 과제 4번에서만 쓰이는 함수이므로 이후의 프로젝트에서는 사용되지 않는다.
 * -----------------------------------------------------------------------------------
-*/
-// void make_opcode_output(char *file_name)
-// {
-// 	/* add your code here */
-
-// }
 
 /* ----------------------------------------------------------------------------------
 * 설명 : 입력된 문자열의 이름을 가진 파일에 프로그램의 결과를 저장하는 함수이다.
@@ -355,7 +446,14 @@ static int assem_pass1(void)
 */
 void make_symtab_output(char* file_name)
 {
-    /* add your code here */
+    if (file_name == NULL)
+    {
+
+    }
+    else
+    {
+
+    }
 }
 
 /* ----------------------------------------------------------------------------------
