@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#include<math.h>
+#include <math.h>
 
   // 파일명의 "00000000"은 자신의 학번으로 변경할 것.
 #include "my_assembler_20192698.h"
@@ -35,14 +35,12 @@ int main(int args, char* arg[])
         printf("init_my_assembler: 프로그램 초기화에 실패 했습니다.\n");
         return -1;
     }
-
     if (assem_pass1() < 0)
     {
         printf("assem_pass1: 패스1 과정에서 실패하였습니다.  \n");
         return -1;
     }
-
-    make_symtab_output("symtab_20192698");
+    make_symtab_output("");
     /*make_literaltab_output("literaltab_20192698");
     if (assem_pass2() < 0)
     {
@@ -178,96 +176,103 @@ int init_input_file(char* input_file)
  */
 int token_parsing(char* str)
 {
-    token_table[token_line] = malloc(sizeof(struct token_unit));//토큰구조체 배열 초기화
-    token_table[token_line]->label = malloc(sizeof(char) * 300);
-    token_table[token_line]->operator=malloc(sizeof(char) * 300);
-    token_table[token_line]->label = NULL;
-    token_table[token_line]->operator=NULL;
-    token_table[token_line]->operand[0][0] = '\0';
-    token_table[token_line]->operand[1][0] = '\0';
-    token_table[token_line]->operand[2][0] = '\0';
-    token_table[token_line]->comment[0] = '\0';
-    int err = 0;
-    if (str == NULL)
+    if (str != NULL || str[0] != "\0" || str[0]!="\n")
     {
-        err = -1;
-    }
-    char* t;
-
-    if (str[0] == '\t') {//label이 없을 경우
+        token_table[token_line] = malloc(sizeof(struct token_unit));//토큰구조체 배열 초기화
+        token_table[token_line]->label = malloc(sizeof(char) * 300);
+        token_table[token_line]->operator=malloc(sizeof(char) * 300);
         token_table[token_line]->label = NULL;
-        t = strtok_s(str, "\t", &str);
-        token_table[token_line]->operator=t;
-    }
-    else if (str[0] == ".")//comment만 존재하거나 .만 찍힌 줄일 경우
-    {
-        strcpy(token_table[token_line]->comment, str);
-        str[0] = "\0";
-    }
-    else {//label 이 있을경우
-        t = strtok_s(str, "\t", &str);
-        token_table[token_line]->label = t;
-        if (strlen(str) > 0) {
+        token_table[token_line]->operator=NULL;
+        token_table[token_line]->operand[0][0] = '\0';
+        token_table[token_line]->operand[1][0] = '\0';
+        token_table[token_line]->operand[2][0] = '\0';
+        token_table[token_line]->comment[0] = '\0';
+        int err = 0;
+        if (str == NULL)
+        {
+            err = -1;
+        }
+        char* t;
+
+        if (str[0] == '\t') {//label이 없을 경우
+            token_table[token_line]->label = NULL;
             t = strtok_s(str, "\t", &str);
-            t = strtok(t, "\n");
-            token_table[token_line]->operator = t;
+            token_table[token_line]->operator=t;
         }
-        else token_table[token_line]->operator = NULL;
-    }
-
-    if (!strlen(str))
-    {
-        return 0;
-    }
-    else
-    {
-        int i;
-        int count = 0;
-        for (i = 0; i < strlen(str); i++)
+        else if (strchr(str, '.'))//comment만 존재하거나 .만 찍힌 줄일 경우
         {
-            if (str[i] == "\t")count += 1;
-            if (count == 2)break;
+            strcpy(token_table[token_line]->comment, str);
+            str[0] = "\0";
         }
-        i = i + 1;
-        count = 0;
-        int c2 = 0;
-        if (str[i] != "\t")//operands 존재
-        {
-            for (i; i < strlen(str); i++)
-            {
-                if (str[i] == "\t")break;
-                else if (str[i] != ",")
-                {
-                    strcpy(token_table[token_line]->operand[count][c2], str[i]);
-                    c2++;
-                }
-                else if (str[i] == ",")
-                {
-                    count++;
-                    c2 = 0;
-                }
+        else {//label 이 있을경우
+            t = strtok_s(str, "\t", &str);
+            token_table[token_line]->label = t;
+            if (strlen(str) > 0) {
+                t = strtok_s(str, "\t", &str);
+                t = strtok(t, "\n");
+                token_table[token_line]->operator = t;
             }
-            count = 0;
-            for (i = i + 1; i < strlen(str); i++)
-            {
-                strcpy(token_table[token_line]->comment[count], str[i]);
+            else token_table[token_line]->operator = NULL;
+        }
 
-                count++;
-            }
+        if (!strlen(str) || str[0] == "\0" || str==NULL || str[0]=="\n")
+        {
+            return 0;
         }
-        else if (str[i] == "\t")//operand 미존재
+        else
         {
             int count = 0;
-            i = i + 1;
-            for (i; i < strlen(str); i++)
+            int c2 = 0;
+            int i=0;
+            if (str[0] != "\t")//operands 존재
             {
-                strcpy(token_table[token_line]->comment[count], str[i]);
-                count++;
+                while(i<strlen(str) && str[i]!='\n')
+                {
+                    if (str[i] == '\t')
+                    {
+                        break;
+                    }
+                    else if (str[i] != ',' && str[i]!='\t')
+                    {
+                        token_table[token_line]->operand[count][c2]=str[i];
+                        c2++;
+                    }
+                    else if (str[i] == ',')
+                    {
+                        token_table[token_line]->operand[count][c2] = '\0';
+                        count++;
+                        c2 = 0;
+                    }
+                    i++;
+                }
+                count = 0;
+                if (str[i] != '\n')
+                {
+                    for (i = i + 1; i < strlen(str); i++)
+                    {
+                        token_table[token_line]->comment[count] = str[i];
+
+                        count++;
+                    }
+                    token_table[token_line]->comment[count] = '\0';
+                }
+               
+            }
+            else if (str[0] == "\t")//operand 미존재
+            {
+                int count = 0;
+                i =2;
+                for (i; i < strlen(str); i++)
+                {
+                    strcpy(token_table[token_line]->comment[count], str[i]);
+                    count++;
+                }
             }
         }
-    }
 
-    return err;
+        return err;
+    }
+    
 }
 
 
@@ -283,30 +288,37 @@ int search_opcode(char* str)
 {
     int an = -1;
     int i = 0;
-    if (str[0] == "+" && str!=NULL)
+    if (str != NULL)
     {
-        char* nstr = malloc(sizeof(str) - sizeof(char));
-        strcpy(nstr, str);
-        while (i < inst_index)
+        if (strchr(str,'+')!=NULL)
         {
-            if (strcmp(inst_table[i]->str, nstr) == 0)
+            char* nstr = malloc(sizeof(str) - sizeof(char));
+            nstr[0] = "\0";
+            for (int vmv = 1; vmv < strlen(str); vmv++)
             {
-                an = i;
-                break;
+                nstr[vmv - 1] = str[vmv];
             }
-            i++;
+            while (i < inst_index)
+            {
+                if (strcmp(inst_table[i]->str, nstr) == 0)
+                {
+                    an = i;
+                    break;
+                }
+                i++;
+            }
         }
-    }
-    else if(str!=NULL)
-    {
-        while (i < inst_index)
+        else
         {
-            if (strcmp(inst_table[i]->str, str) == 0)
+            while (i < inst_index)
             {
-                an = i;
-                break;
+                if (strcmp(inst_table[i]->str, str) == 0)
+                {
+                    an = i;
+                    break;
+                }
+                i++;
             }
-            i++;
         }
     }
  
@@ -338,38 +350,63 @@ static int assem_pass1(void)
         err = token_parsing(input_data[i]);//token화함.
         if (token_line == 0)//처음 loccation저장,10진수로 바꿔 저장함.
         {
-            locctr = strtol(token_table[token_line]->operator[0], NULL, 16);
+            char* nnum = "0x";
+            nnum += token_table[token_line]->operator[0];
+            locctr = strtol(nnum, NULL, 16);
             sttadd = locctr;
+            token_table[token_line]->addr = locctr;
+            sym_table[symbol_count].symbol = malloc(sizeof(char) * 80);
+            sym_table[symbol_count].symbol[0] = "\0";
+            strcpy(sym_table[symbol_count].symbol, token_table[token_line]->label);
+            sym_table[symbol_count].addr = locctr;
+            symbol_count++;
         }
         else if(token_table[token_line]->label!=NULL)
         {
-            if (input_data[i][0] != ".")
+            if (strcmp(token_table[token_line - 1]->operator,"EQU") == 0 && strcmp(token_table[token_line]->operator,"EQU") == 0)
             {
-                token_table[token_line]->addr = locctr;
+                token_table[token_line]->addr = atoi(token_table[token_line - 2]->operand[0]);
+                sym_table[symbol_count].symbol = malloc(sizeof(char) * 80);
+                sym_table[symbol_count].symbol[0] = "\0";
+                strcpy(sym_table[symbol_count].symbol, token_table[token_line]->label);
+                sym_table[symbol_count].addr = atoi(token_table[token_line - 2]->operand[0]);
+                symbol_count++;
             }
-            if (symbol_count != 0)
+            else
             {
-                for (int j = 0; j < symbol_count; j++)
+                if (input_data[i][0] != ".")
                 {
-                    if (strcmp(token_table[token_line]->label, sym_table[j].symbol) == 0)
+                    token_table[token_line]->addr = locctr;
+                }
+                if (symbol_count != 0)
+                {
+                    for (int j = 0; j < symbol_count; j++)
                     {
-                        err = -1;//error
-                        break;
+                        if (strcmp(token_table[token_line]->label, sym_table[j].symbol) == 0)
+                        {
+                            err = -1;//error
+                            break;
+                        }
                     }
                 }
                 if (err == 0)
                 {
                     sym_table[symbol_count].symbol = malloc(sizeof(char) * 80);
-                    sym_table[symbol_count].symbol = NULL;
+                    sym_table[symbol_count].symbol[0] = "\0";
                     strcpy(sym_table[symbol_count].symbol, token_table[token_line]->label);
                     sym_table[symbol_count].addr = locctr;
                     symbol_count++;
                 }
             }
+            
         }
         if (token_table[token_line]->operator!=NULL)
         {
-            if (search_opcode(token_table[token_line]->operator) != -1)
+            if (strchr(token_table[token_line]->operator,'+')!=NULL)
+            {
+                locctr += 4;
+            }
+            else if (search_opcode(token_table[token_line]->operator) != -1)
             {
                 locctr += 3;
             }
@@ -379,11 +416,15 @@ static int assem_pass1(void)
             }
             else if (strcmp(token_table[token_line]->operator,"RESW") == 0)
             {
-                locctr += (3 * (int)(token_table[token_line]->operand[0]));
+                locctr += (3 * atoi(token_table[token_line]->operand[0]));
             }
             else if (strcmp(token_table[token_line]->operator,"RESB") == 0)
             {
                 locctr += atoi(token_table[token_line]->operand[0]);
+            }
+            else if (strcmp(token_table[token_line]->operator,"LTORG\n") == 0)
+            {
+                locctr += 3;
             }
             else if (strcmp(token_table[token_line]->operator,"BYTE") == 0)
             {
@@ -404,8 +445,10 @@ static int assem_pass1(void)
                         count++;
                     }
                 }
-                char* numbbb = malloc(sizeof(char) * (e - s));
-                count = 0;
+                char* numbbb = malloc(sizeof(char) * (e - s)+2);
+                numbbb[0] = "0";
+                numbbb[1] = "x";
+                count = 2;
                 for (int k = s + 1; k < e; k++)
                 {
                     numbbb[count] = token_table[token_line]->operand[0][k];
@@ -413,12 +456,9 @@ static int assem_pass1(void)
                 int nuk = strtol(numbbb, NULL, 16);
                 locctr += (nuk / (int)pow(2.0, 8.0)) + 1;//2^8으로 나눈 몫 +1을 하여 length(byte수)를 구함.
             }
-            else
-            {
-                err = -1;
-            }
         }
         token_line++;
+        
     }
     proglength = locctr - sttadd;//프로그램 길이 저장.
     return err;
@@ -446,13 +486,25 @@ static int assem_pass1(void)
 */
 void make_symtab_output(char* file_name)
 {
-    if (file_name == NULL)
+    if (*file_name == NULL)
     {
-
+        for (int i = 0; i < symbol_count; i++)
+        {
+            printf("%s\t", sym_table[i].symbol);
+            printf("%X\n", sym_table[i].addr);
+        }
     }
     else
     {
-
+        FILE* f = fopen(file_name, "w");
+        for (int i = 0; i < symbol_count; i++)
+        {
+            fwrite(sym_table[i].symbol, sizeof(char) * strlen(sym_table[i].symbol), 1, f);
+            fwrite("\t", sizeof("\t"), 1, f);
+            fprintf(f, "%02X", sym_table[i].addr);
+            fwrite("\n", sizeof("\n"), 1, f);
+        }
+        fclose(f);
     }
 }
 
