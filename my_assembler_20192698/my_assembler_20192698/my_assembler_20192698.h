@@ -77,7 +77,6 @@ typedef struct literal_unit literal;
 literal literal_table[MAX_LINES];
 
 static int locctr;
-static int proglength = 0;//program length변수 생성.
 //--------------
 
 static char* input_file;

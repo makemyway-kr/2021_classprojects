@@ -123,7 +123,7 @@ int init_inst_file(char* inst_file)
         inst_table[i]->op = malloc(sizeof(unsigned char));
         inst_table[i]->format = 0;
         inst_table[i]->ops = 0;
-        fscanf(inst_file_to_read, "%s %c %c %c %d", st, &b, &o1, &o2, &d);// inst로부터 입력받음
+        fscanf(inst_file_to_read, "%s %d %c %c %d", st, &b, &o1, &o2, &d);// inst로부터 입력받음
         strcpy(inst_table[i]->str, st);// 변수에 저장
         inst_table[i]->format = b;
         inst_table[i]->op = (unsigned char)(dic[o1] * 16 + dic[o2]);
@@ -348,6 +348,13 @@ static int assem_pass1(void)
     for (int i = 0; i < line_num; i++)//token으로 쪼개줌.
     {
         err = token_parsing(input_data[i]);//token화함.
+        if (token_table[token_line]->operator)
+        {
+            if (strcmp(token_table[token_line]->operator,"CSECT") == 0)
+            {
+                locctr = 0;//controlsection이 넘어가 초기화해줌.
+            }
+        }
         if (token_line == 0)//처음 loccation저장,10진수로 바꿔 저장함.
         {
             char* nnum = "0x";
@@ -402,13 +409,26 @@ static int assem_pass1(void)
         }
         if (token_table[token_line]->operator!=NULL)
         {
+            
             if (strchr(token_table[token_line]->operator,'+')!=NULL)
             {
                 locctr += 4;
             }
-            else if (search_opcode(token_table[token_line]->operator) != -1)
+            int retid = search_opcode(token_table[token_line]->operator);
+            if (retid != -1)
             {
-                locctr += 3;
+                if (inst_table[retid]->format == 2)//2형식
+                {
+                    locctr += 2;
+                }
+                else if (inst_table[retid]->format == 1)//1형식
+                {
+                    locctr += 1;
+                }
+                else
+                {
+                    locctr += 3;
+                }
             }
             else if (strcmp(token_table[token_line]->operator,"WORD") == 0)
             {
@@ -460,7 +480,6 @@ static int assem_pass1(void)
         token_line++;
         
     }
-    proglength = locctr - sttadd;//프로그램 길이 저장.
     return err;
 }
 
