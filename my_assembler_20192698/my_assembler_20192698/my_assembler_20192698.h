@@ -58,7 +58,7 @@ struct symbol_unit
     char* symbol;
     int addr;
 };
-static int symbol_count = 0;//symbol의 갯수 저장 변수
+
 /*
 * 리터럴을 관리하는 구조체이다.
 * 리터럴 테이블은 리터럴의 이름, 리터럴의 위치로 구성된다.
@@ -72,10 +72,10 @@ struct literal_unit
 
 typedef struct symbol_unit symbol;
 symbol sym_table[MAX_LINES];
-
+static int symbol_count = 0;//symbol의 갯수 저장 변수
 typedef struct literal_unit literal;
 literal literal_table[MAX_LINES];
-
+static int litcount;//리터럴 테이블의 갯수를 새어주기위한 변수.
 static int locctr;
 //--------------
 

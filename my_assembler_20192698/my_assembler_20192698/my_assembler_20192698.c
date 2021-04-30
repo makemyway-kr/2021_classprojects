@@ -41,7 +41,8 @@ int main(int args, char* arg[])
         return -1;
     }
     make_symtab_output("");
-    /*make_literaltab_output("literaltab_20192698");
+    make_literaltab_output("");
+    /*
     if (assem_pass2() < 0)
     {
         printf(" assem_pass2: 패스2 과정에서 실패하였습니다.  \n");
@@ -187,6 +188,7 @@ int token_parsing(char* str)
         token_table[token_line]->operand[1][0] = '\0';
         token_table[token_line]->operand[2][0] = '\0';
         token_table[token_line]->comment[0] = '\0';
+        token_table[token_line]->addr = 0;
         int err = 0;
         if (str == NULL)
         {
@@ -202,7 +204,6 @@ int token_parsing(char* str)
         else if (strchr(str, '.'))//comment만 존재하거나 .만 찍힌 줄일 경우
         {
             strcpy(token_table[token_line]->comment, str);
-            str[0] = "\0";
         }
         else {//label 이 있을경우
             t = strtok_s(str, "\t", &str);
@@ -215,7 +216,7 @@ int token_parsing(char* str)
             else token_table[token_line]->operator = NULL;
         }
 
-        if (!strlen(str) || str[0] == "\0" || str==NULL || str[0]=="\n")
+        if (!strlen(str) || str[0] == '\0' || str==NULL || str[0]=='\n'||str[0]=='.')
         {
             return 0;
         }
@@ -293,7 +294,7 @@ int search_opcode(char* str)
         if (strchr(str,'+')!=NULL)
         {
             char* nstr = malloc(sizeof(str) - sizeof(char));
-            nstr[0] = "\0";
+            nstr[0] = '\0';
             for (int vmv = 1; vmv < strlen(str); vmv++)
             {
                 nstr[vmv - 1] = str[vmv];
@@ -355,6 +356,10 @@ static int assem_pass1(void)
                 locctr = 0;//controlsection이 넘어가 초기화해줌.
             }
         }
+        if (input_data[i][0] != '.')
+        {
+            token_table[token_line]->addr = locctr;
+        }
         if (token_line == 0)//처음 loccation저장,10진수로 바꿔 저장함.
         {
             char* nnum = "0x";
@@ -381,10 +386,6 @@ static int assem_pass1(void)
             }
             else
             {
-                if (input_data[i][0] != ".")
-                {
-                    token_table[token_line]->addr = locctr;
-                }
                 if (symbol_count != 0)
                 {
                     for (int j = 0; j < symbol_count; j++)
@@ -480,6 +481,76 @@ static int assem_pass1(void)
         token_line++;
         
     }
+    //리터럴 테이블
+    litcount = 0;
+    for (int i = 0; i < token_line; i++)
+    {
+        if (token_table[i]->operand[0][0] == '=')//리터럴이 존재함.
+        {
+            int frs = 0;
+            int ts = 0;
+            int cstr = 0;
+            char* temp = malloc(sizeof(char) * 50);
+            for (int fk = 0; fk < 50; fk++)
+            {
+                temp[fk] = '0';
+            }
+            for (int kli = 0; cstr<=1; kli++)
+            {
+                if (token_table[i]->operand[0][kli] == '\'' && cstr == 0)
+                {
+                    frs = kli;
+                    cstr++;
+                }
+                else if (token_table[i]->operand[0][kli] == '\'' && cstr == 1)
+                {
+                    ts = kli;
+                    cstr++;
+                }
+            }
+            for (int jlm = frs + 1; jlm < ts; jlm++)
+            {
+                temp[jlm - frs - 1] = token_table[i]->operand[0][jlm];
+            }
+            temp[ts - frs-1] = '\0';
+            int errlit = 0;
+            for (int litin = 0; litin < litcount; litin++)
+            {
+                if (strcmp(literal_table[litin].literal, temp) == 0)
+                {
+                    errlit = -1;
+                }
+            }
+            if (errlit == 0)
+            {
+                literal_table[litcount].literal = malloc(sizeof(char) * 50);
+                literal_table[litcount].literal[0] = '\0';
+                literal_table[litcount].addr = 0;
+                int j = i;
+                while (token_table[j]->addr != 0 && j < token_line)
+                {
+                    if (token_table[j]->operator!=NULL)
+                    {
+                        if (strcmp(token_table[j]->operator,"LTORG\n") == 0)
+                        {
+                            break;
+                        }
+                    }
+                    if (j + 1 < token_line)
+                    {
+                        j++;
+                    }
+                    else if (j + 1 == token_line)
+                    {
+                        break;
+                    }
+                }
+                strcpy(literal_table[litcount].literal, temp);
+                literal_table[litcount].addr = token_table[j]->addr;
+                litcount++;
+            }
+        }
+    }
     return err;
 }
 
@@ -539,7 +610,26 @@ void make_symtab_output(char* file_name)
 */
 void make_literaltab_output(char* filen_ame)
 {
-    /* add your code here */
+    if (*filen_ame == NULL)
+    {
+        for (int i = 0; i < litcount; i++)
+        {
+            printf("%s\t", literal_table[i].literal);
+            printf("%X\n", literal_table[i].addr);
+        }
+    }
+    else
+    {
+        FILE* f = fopen(filen_ame, "w");
+        for (int i = 0; i < symbol_count; i++)
+        {
+            fwrite(literal_table[i].literal, sizeof(char) * strlen(literal_table[i].literal), 1, f);
+            fwrite("\t", sizeof("\t"), 1, f);
+            fprintf(f, "%02X", sym_table[i].addr);
+            fwrite("\n", sizeof("\n"), 1, f);
+        }
+        fclose(f);
+    }
 }
 
 /* ----------------------------------------------------------------------------------
