@@ -42,6 +42,7 @@ struct token_unit
     char operand[MAX_OPERAND][20];
     char comment[100];
     char nixbpe;
+    int objectcode;
     int addr;//locctr값을 모두 적어주기 위함.
 };
 
@@ -57,6 +58,7 @@ struct symbol_unit
 {
     char* symbol;
     int addr;
+    int section;//몇번째 섹션인지
 };
 
 /*
@@ -76,6 +78,9 @@ static int symbol_count = 0;//symbol의 갯수 저장 변수
 typedef struct literal_unit literal;
 literal literal_table[MAX_LINES];
 static int litcount;//리터럴 테이블의 갯수를 새어주기위한 변수.
+static int progrlength = 0;
+int sttadd = 0;//starting address
+int eachsection[5] = { 0,0,0,0,0 };//각 섹션의 시작 토큰번호 저장.
 static int locctr;
 //--------------
 

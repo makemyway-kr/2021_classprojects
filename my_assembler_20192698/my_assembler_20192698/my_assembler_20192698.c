@@ -16,7 +16,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <math.h>
-
+#include <stdbool.h>
   // 파일명의 "00000000"은 자신의 학번으로 변경할 것.
 #include "my_assembler_20192698.h"
 
@@ -189,6 +189,7 @@ int token_parsing(char* str)
         token_table[token_line]->operand[2][0] = '\0';
         token_table[token_line]->comment[0] = '\0';
         token_table[token_line]->addr = 0;
+        token_table[token_line]->nixbpe = 0;
         int err = 0;
         if (str == NULL)
         {
@@ -345,14 +346,19 @@ static int assem_pass1(void)
     int err = 0;
     locctr = 0;
     token_line = 0;
-    int sttadd = 0;
+    sttadd = 0;
+    int section_count = 0;
     for (int i = 0; i < line_num; i++)//token으로 쪼개줌.
     {
         err = token_parsing(input_data[i]);//token화함.
-        if (token_table[token_line]->operator)
+        if (token_table[token_line]->operator!=NULL)
         {
             if (strcmp(token_table[token_line]->operator,"CSECT") == 0)
             {
+                progrlength += locctr;
+                progrlength -= sttadd;
+                eachsection[section_count] = token_line;
+                section_count++;
                 locctr = 0;//controlsection이 넘어가 초기화해줌.
             }
         }
@@ -371,6 +377,7 @@ static int assem_pass1(void)
             sym_table[symbol_count].symbol[0] = "\0";
             strcpy(sym_table[symbol_count].symbol, token_table[token_line]->label);
             sym_table[symbol_count].addr = locctr;
+            sym_table[symbol_count].section = section_count - 1;
             symbol_count++;
         }
         else if(token_table[token_line]->label!=NULL)
@@ -382,29 +389,18 @@ static int assem_pass1(void)
                 sym_table[symbol_count].symbol[0] = "\0";
                 strcpy(sym_table[symbol_count].symbol, token_table[token_line]->label);
                 sym_table[symbol_count].addr = atoi(token_table[token_line - 2]->operand[0]);
+                sym_table[symbol_count].section = section_count - 1;
                 symbol_count++;
             }
             else
             {
-                if (symbol_count != 0)
-                {
-                    for (int j = 0; j < symbol_count; j++)
-                    {
-                        if (strcmp(token_table[token_line]->label, sym_table[j].symbol) == 0)
-                        {
-                            err = -1;//error
-                            break;
-                        }
-                    }
-                }
-                if (err == 0)
-                {
-                    sym_table[symbol_count].symbol = malloc(sizeof(char) * 80);
-                    sym_table[symbol_count].symbol[0] = "\0";
-                    strcpy(sym_table[symbol_count].symbol, token_table[token_line]->label);
-                    sym_table[symbol_count].addr = locctr;
-                    symbol_count++;
-                }
+                sym_table[symbol_count].symbol = malloc(sizeof(char) * 80);
+                sym_table[symbol_count].symbol[0] = "\0";
+                strcpy(sym_table[symbol_count].symbol, token_table[token_line]->label);
+                sym_table[symbol_count].addr = locctr;
+                sym_table[symbol_count].section = section_count - 1;
+                symbol_count++;
+            
             }
             
         }
@@ -480,6 +476,31 @@ static int assem_pass1(void)
         }
         token_line++;
         
+    }
+    for (int i = 0; i < token_line; i++)
+    {
+        if (token_table[i]->operator)
+        {
+            if (token_table[i]->operator[0] == '+')token_table[i]->nixbpe += 1;//e
+            if (token_table[i]->operand[0][0] != '\0')
+            {
+                if (token_table[i]->operand[0][0] == '#')token_table[i]->nixbpe += 16;//i
+                else if (token_table[i]->operand[0][0] == '@')token_table[i]->nixbpe += 32;//n
+                else
+                {
+                    token_table[i]->nixbpe += 12;//simple addressing
+                }
+            }
+            if (token_table[i]->operand[1][0] != '\0')
+            {
+                if (token_table[i]->operand[1][0] == 'X')
+                {
+                    token_table[i] += 8;
+                }
+            }
+
+           
+        }
     }
     //리터럴 테이블
     litcount = 0;
@@ -578,6 +599,7 @@ void make_symtab_output(char* file_name)
 {
     if (*file_name == NULL)
     {
+        printf("SYMTAB\n");
         for (int i = 0; i < symbol_count; i++)
         {
             printf("%s\t", sym_table[i].symbol);
@@ -586,15 +608,15 @@ void make_symtab_output(char* file_name)
     }
     else
     {
-        FILE* f = fopen(file_name, "w");
-        for (int i = 0; i < symbol_count; i++)
-        {
-            fwrite(sym_table[i].symbol, sizeof(char) * strlen(sym_table[i].symbol), 1, f);
-            fwrite("\t", sizeof("\t"), 1, f);
-            fprintf(f, "%02X", sym_table[i].addr);
-            fwrite("\n", sizeof("\n"), 1, f);
-        }
-        fclose(f);
+    FILE* f = fopen(file_name, "w");
+    for (int i = 0; i < symbol_count; i++)
+    {
+        fwrite(sym_table[i].symbol, sizeof(char) * strlen(sym_table[i].symbol), 1, f);
+        fwrite("\t", sizeof("\t"), 1, f);
+        fprintf(f, "%02X", sym_table[i].addr);
+        fwrite("\n", sizeof("\n"), 1, f);
+    }
+    fclose(f);
     }
 }
 
@@ -612,6 +634,7 @@ void make_literaltab_output(char* filen_ame)
 {
     if (*filen_ame == NULL)
     {
+        printf("\nLiteral Tab\n");
         for (int i = 0; i < litcount; i++)
         {
             printf("%s\t", literal_table[i].literal);
@@ -644,8 +667,103 @@ void make_literaltab_output(char* filen_ame)
 */
 static int assem_pass2(void)
 {
+    for (int i = 0; i < token_line; i++)
+    {
+        bool start = false;
+        for (int isstart = 0; isstart < 5; isstart++)
+        {
+            if (eachsection[isstart] == i)
+            {
+                start = true;
+            }
+        }
+        int currsection = 0;//현재 섹션
+        for (int isstart = 0; isstart < 5; isstart++)
+        {
+            if (eachsection[isstart] > i)
+            {
+                currsection = isstart;
+            }
+        }
+        if (start)//START of each section
+        {
+            token_table[i]->objectcode = token_table[i]->addr;
+        }
+        else if (token_table[i]->operator)
+        {
+            if (strchr(token_table[i]->operator,'+') != NULL)//4형식
+            {
+                int opcodereturn = search_opcode(token_table[i]->operator);
+                if (token_table[i]->operand[0] != '\0')
+                {
+                    if ((token_table[i]->nixbpe & 32) == 32 && (token_table[i]->nixbpe & 16) !=16)//indirect이면
+                    {
 
-    /* add your code here */
+                    }
+                    else if ((token_table[i]->nixbpe & 16) == 16 && (token_table[i]->nixbpe & 32) != 32)//immediate면
+                    {
+
+                    }
+                    else
+                    {
+                        if ((token_table[i]->nixbpe & 8) == 8)//x==1일때
+                        {
+
+                        }
+                        else
+                        {
+
+                        }
+                    }
+                    for (int issym = 0; issym < symbol_count; issym++)
+                    {
+
+                        if (strcmp(sym_table[issym].symbol, token_table[i]->operand[0]) == 0 && sym_table[issym].section==currsection-1)
+                        {
+
+                        }
+                        else if(strcmp(sym_table[issym].symbol, token_table[i]->operand[0]) == 0 && sym_table[issym].section != currsection - 1)
+                        {
+
+                        }
+                        else
+                        {
+                            token_table[i]->objectcode = -1;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                int opcodereturn = search_opcode(token_table[i]->operator);
+                if (opcodereturn != -1)
+                {
+                    if (inst_table[opcodereturn]->format == 1)
+                    {
+
+                    }
+                    else if (inst_table[opcodereturn]->format == 2)
+                    {
+
+                    }
+                    else if (inst_table[opcodereturn]->format == 3)
+                    {
+
+                    }
+                }
+                else if (strcmp(token_table[i]->operator,"WORD") == 0 || strcmp(token_table[i]->operator,"BYTE") == 0)
+                {
+
+                }
+                else
+                {
+                    token_table[i]->objectcode = -1;
+                }
+            }
+
+
+        }
+    }
 }
 
 /* ----------------------------------------------------------------------------------
