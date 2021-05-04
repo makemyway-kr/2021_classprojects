@@ -515,7 +515,6 @@ static int assem_pass1(void)
     {
         if (token_table[i]->operand[0][0] == '=')//리터럴이 존재함.
         {
-            token_table[i]->is_literal = true;
             int frs = 0;//앞부분
             int ts = 0;//뒷부분, tail(리터럴의 끝)
             int cstr = 0;
@@ -552,6 +551,7 @@ static int assem_pass1(void)
             }
             if (errlit == 0)
             {
+                token_table[i]->is_literal = true;
                 literal_table[litcount].literal = malloc(sizeof(char) * 50);
                 literal_table[litcount].literal[0] = '\0';
                 literal_table[litcount].addr = 0;
@@ -710,7 +710,109 @@ static int assem_pass2(void)
             int opc = search_opcode(token_table[i]->operator);
             if (opc != -1)
             {
-                if (inst_table[opc]->format == 1)//1형식
+                if ((token_table[i]->nixbpe &1)==1)//4형식
+                {
+
+                    if (token_table[i]->operand[0][0] != '\0')
+                    {
+                        int temporarymarker = 0;
+                        if (token_table[i]->operand[0][0] == '@')//indirect
+                        {
+                            for (int issym = 0; issym < symbol_count; issym++)//현재 section에 symbol이 있는지 파악 후 계산
+                            {
+
+                                if (strcmp(sym_table[issym].symbol, strtok(token_table[i]->operand[0], "@")) == 0 && sym_table[issym].section == currsection - 1)
+                                {
+                                    token_table[i]->nixbpe += 2;//pc relatvie
+                                    temporarymarker = 1;
+                                    char tempni = 0;
+                                    token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)2;
+                                    tempni = token_table[i]->nixbpe - 32;
+                                    token_table[i]->objectcode[1] = (unsigned char)tempni;
+                                    token_table[i]->objectcode[2] = (unsigned char)((sym_table[issym].addr - token_table[i + 1]->addr) / 256);
+                                    token_table[i]->objectcode[3] = (unsigned char)((sym_table[issym].addr - token_table[i + 1]->addr) % 256);
+
+                                }
+
+                            }
+                            if (temporarymarker == 0)
+                            {
+                                char tempni = 0;
+                                token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)2;
+                                tempni = token_table[i]->nixbpe - 32;
+                                token_table[i]->objectcode[1] = (unsigned char)tempni;
+                                token_table[i]->objectcode[2] = 0;
+                                token_table[i]->objectcode[3] = 0;
+                            }
+                        }
+                        else//indirect가 아님.(simple or immediate)
+                        {
+                            for (int issym = 0; issym < symbol_count; issym++)//현재 section에 symbol이 있는지 파악 후 계산
+                            {
+
+                                if (strcmp(sym_table[issym].symbol, token_table[i]->operand[0]) == 0 && sym_table[issym].section == currsection - 1)
+                                {
+                                    temporarymarker = 1;
+                                    char tempni = 0;
+                                    token_table[i]->nixbpe += 2;//pc relatvie
+                                    if ((token_table[i]->nixbpe & 32) == 32 && (token_table[i]->nixbpe & 16) == 16)//simple addressing
+                                    {
+                                        token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)1;
+                                        tempni = token_table[i]->nixbpe - 48;
+                                        token_table[i]->objectcode[1] = (unsigned char)tempni;
+                                        token_table[i]->objectcode[2] = (unsigned char)((sym_table[issym].addr - token_table[i + 1]->addr) / 256);
+                                        token_table[i]->objectcode[3] = (unsigned char)((sym_table[issym].addr - token_table[i + 1]->addr) % 256);
+                                    }
+
+
+                                }
+
+                            }
+                            if (temporarymarker == 0)
+                            {
+                                if ((token_table[i]->nixbpe & 16) == 16 && (token_table[i]->nixbpe & 32) != 32)//immediate
+                                {
+                                    char tempni = 0;
+                                    token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)1;
+                                    tempni = token_table[i]->nixbpe - 16;
+                                    token_table[i]->objectcode[1] = (unsigned char)tempni;
+                                    int templength = atoi(strtok(token_table[i]->operand[0], "#"));
+                                    token_table[i]->objectcode[2] = (unsigned char)(templength / 256);
+                                    token_table[i]->objectcode[3] = (unsigned char)(templength % 256);
+
+                                }
+                                else if (token_table[i]->is_literal == true)//literal
+                                {
+                                    for (int j = 0; j < litcount; j++)
+                                    {
+                                        if (strcmp(literal_table[j].literal, token_table[i]->literal) == 0)
+                                        {
+                                            token_table[i]->nixbpe += 2;//pc relatvie
+                                            char tempni = 0;
+                                            token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)3;
+                                            tempni = token_table[i]->nixbpe - 48;
+                                            token_table[i]->objectcode[1] = (unsigned char)tempni;
+                                            token_table[i]->objectcode[2] = (unsigned char)((literal_table[j].addr - token_table[i + 1]->addr) / 256);
+                                            token_table[i]->objectcode[3] = (unsigned char)((literal_table[j].addr - token_table[i + 1]->addr) % 256);
+                                        }
+
+
+                                    }
+                                }
+                                else//simple && not in section
+                                {
+                                    char tempni = 0;
+                                    token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)3;
+                                    tempni = token_table[i]->nixbpe - 48;
+                                    token_table[i]->objectcode[1] = (unsigned char)tempni;
+                                    token_table[i]->objectcode[2] = 0;
+                                    token_table[i]->objectcode[3] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (inst_table[opc]->format == 1)//1형식
                 {
                     token_table[i]->objectcode[0] = inst_table[opc]->op;//opcode만 들어감.
                 }
@@ -781,109 +883,7 @@ static int assem_pass2(void)
                         }
                     }
                 }
-                else if (strchr(token_table[i]->operator,'+') != NULL)//4형식
-                {
-
-                    if (token_table[i]->operand[0][0] != '\0')
-                    {
-                        int temporarymarker = 0;
-                        if (token_table[i]->operand[0][0] == '@')//indirect
-                        {
-                            for (int issym = 0; issym < symbol_count; issym++)//현재 section에 symbol이 있는지 파악 후 계산
-                            {
-
-                                if (strcmp(sym_table[issym].symbol, strtok(token_table[i]->operand[0], "@")) == 0 && sym_table[issym].section == currsection - 1)
-                                {
-                                    token_table[i]->nixbpe += 2;//pc relatvie
-                                    temporarymarker = 1;
-                                    char tempni = 0;
-                                    token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)2;
-                                    tempni = token_table[i]->nixbpe - 32;
-                                    token_table[i]->objectcode[1] = (unsigned char)tempni;
-                                    token_table[i]->objectcode[2] = (unsigned char)((sym_table[issym].addr - token_table[i + 1]->addr) / 256);
-                                    token_table[i]->objectcode[3] = (unsigned char)((sym_table[issym].addr - token_table[i + 1]->addr) % 256);
-
-                                }
-
-                            }
-                            if (temporarymarker == 0)
-                            {
-                                char tempni = 0;
-                                token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)2;
-                                tempni = token_table[i]->nixbpe - 32;
-                                token_table[i]->objectcode[1] = (unsigned char)tempni;
-                                token_table[i]->objectcode[2] = 0;
-                                token_table[i]->objectcode[3] = 0;
-                            }
-                        }
-                        else//indirect가 아님.(simple or immediate)
-                        {
-                            for (int issym = 0; issym < symbol_count; issym++)//현재 section에 symbol이 있는지 파악 후 계산
-                            {
-
-                                if (strcmp(sym_table[issym].symbol, token_table[i]->operand[0]) == 0 && sym_table[issym].section == currsection - 1)
-                                {
-                                    temporarymarker = 1;
-                                    char tempni = 0;
-                                    token_table[i]->nixbpe += 2;//pc relatvie
-                                    if ((token_table[i]->nixbpe & 32) == 32 && (token_table[i]->nixbpe & 16) == 16)//simple addressing
-                                    {
-                                        token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)1;
-                                        tempni = token_table[i]->nixbpe - 48;
-                                        token_table[i]->objectcode[1] = (unsigned char)tempni;
-                                        token_table[i]->objectcode[2] = (unsigned char)((sym_table[issym].addr - token_table[i + 1]->addr) / 256);
-                                        token_table[i]->objectcode[3] = (unsigned char)((sym_table[issym].addr - token_table[i + 1]->addr) % 256);
-                                    }
-
-
-                                }
-
-                            }
-                            if (temporarymarker == 0)
-                            {
-                                if ((token_table[i]->nixbpe & 16) == 16)//immediate
-                                {
-                                    token_table[i]->nixbpe += 2;//pc relatvie
-                                    char tempni = 0;
-                                    token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)1;
-                                    tempni = token_table[i]->nixbpe - 16;
-                                    token_table[i]->objectcode[1] = (unsigned char)tempni;
-                                    int templength = atoi(strtok(token_table[i]->operand[0], "#"));
-                                    token_table[i]->objectcode[2] = (unsigned char)(templength / 256);
-                                    token_table[i]->objectcode[3] = (unsigned char)(templength % 256);
-
-                                }
-                                else if (token_table[i]->is_literal == true)//literal
-                                {
-                                    for (int j = 0; j < litcount; j++)
-                                    {
-                                        if (strcmp(literal_table[j].literal, token_table[i]->literal) == 0)
-                                        {
-                                            token_table[i]->nixbpe += 2;//pc relatvie
-                                            char tempni = 0;
-                                            token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)3;
-                                            tempni = token_table[i]->nixbpe - 48;
-                                            token_table[i]->objectcode[1] = (unsigned char)tempni;
-                                            token_table[i]->objectcode[2] = (unsigned char)((literal_table[j].addr - token_table[i + 1]->addr) / 256);
-                                            token_table[i]->objectcode[3] = (unsigned char)((literal_table[j].addr - token_table[i + 1]->addr) % 256);
-                                        }
-
-
-                                    }
-                                }
-                                else//simple && not in section
-                                {
-                                    char tempni = 0;
-                                    token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)3;
-                                    tempni = token_table[i]->nixbpe - 48;
-                                    token_table[i]->objectcode[1] = (unsigned char)tempni;
-                                    token_table[i]->objectcode[2] = 0;
-                                    token_table[i]->objectcode[3] = 0;
-                                }
-                            }
-                        }
-                    }
-                }
+                
                 else if (inst_table[opc]->format == 3)
                 {
                     if (token_table[i]->operand[0][0] != '\0')
@@ -940,9 +940,9 @@ static int assem_pass2(void)
                             }
                             if (temporarymarker == 0)
                             {
-                                if ((token_table[i]->nixbpe & 16) == 16)//immediate
+                                if ((token_table[i]->nixbpe & 16) == 16 && (token_table[i]->nixbpe&32)!=32)//immediate
                                 {
-                                    token_table[i]->nixbpe += 2;//pc relatvie
+                                    
                                     char tempni = 0;
                                     token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)1;
                                     tempni = token_table[i]->nixbpe - 16;
@@ -1015,7 +1015,7 @@ void make_objectcode_output(char* file_name)
 {
     for (int i = 0; i < token_line; i++)
     {
-        printf("%s", token_table[i]->operator);
+        printf("%X %s",token_table[i]->addr, token_table[i]->operator);
         for (int j = 0; j < 4; j++)
         {
             
