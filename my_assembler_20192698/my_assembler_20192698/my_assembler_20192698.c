@@ -42,7 +42,7 @@ int main(int args, char* arg[])
     }
     make_symtab_output("");
     make_literaltab_output("");
-    /*
+ 
     if (assem_pass2() < 0)
     {
         printf(" assem_pass2: 패스2 과정에서 실패하였습니다.  \n");
@@ -50,7 +50,6 @@ int main(int args, char* arg[])
     }
 
     make_objectcode_output("output_20192698");
-    */
     return 0;
 
 }
@@ -413,13 +412,12 @@ static int assem_pass1(void)
         }
         if (token_table[token_line]->operator!=NULL)
         {
-            
+            int retid = search_opcode(token_table[token_line]->operator);
             if (strchr(token_table[token_line]->operator,'+')!=NULL)
             {
                 locctr += 4;
             }
-            int retid = search_opcode(token_table[token_line]->operator);
-            if (retid != -1)
+            else if (retid != -1)
             {
                 if (inst_table[retid]->format == 2)//2형식
                 {
@@ -506,12 +504,9 @@ static int assem_pass1(void)
             {
                 if (token_table[i]->operand[1][0] == 'X')
                 {
-                    token_table[i] += 8;
+                    token_table[i]->nixbpe += 8;
                 }
             }
-            
-
-           
         }
     }
     //리터럴 테이블
@@ -1020,8 +1015,10 @@ void make_objectcode_output(char* file_name)
 {
     for (int i = 0; i < token_line; i++)
     {
+        printf("%s", token_table[i]->operator);
         for (int j = 0; j < 4; j++)
         {
+            
             if (token_table[i]->objectcode[j] != 256)
             {
                 if (j == 0)
@@ -1042,5 +1039,7 @@ void make_objectcode_output(char* file_name)
                 }
             }
         }
+        printf("\n");
+
     }
 }
