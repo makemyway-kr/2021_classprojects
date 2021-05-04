@@ -50,9 +50,9 @@ int main(int args, char* arg[])
     }
 
     make_objectcode_output("output_20192698");
-
-    return 0;
     */
+    return 0;
+
 }
 
 /* ----------------------------------------------------------------------------------
@@ -177,13 +177,15 @@ int init_input_file(char* input_file)
  */
 int token_parsing(char* str)
 {
-    if (str != NULL || str[0] != "\0" || str[0]!="\n")
+    if (str != NULL || str[0] != "\0" || str[0] != "\n")
     {
         token_table[token_line] = malloc(sizeof(struct token_unit));//토큰구조체 배열 초기화
         token_table[token_line]->label = malloc(sizeof(char) * 300);
         token_table[token_line]->operator=malloc(sizeof(char) * 300);
         token_table[token_line]->label[0] = '\0';
-        token_table[token_line]->operator[0] = '0';
+        token_table[token_line]->operator[0] = '\0';
+        token_table[token_line]->label = NULL;
+        token_table[token_line]->operator=NULL;
         token_table[token_line]->operand[0][0] = '\0';
         token_table[token_line]->operand[1][0] = '\0';
         token_table[token_line]->operand[2][0] = '\0';
@@ -201,7 +203,7 @@ int token_parsing(char* str)
         if (str[0] == '\t') {//label이 없을 경우
             token_table[token_line]->label = NULL;
             t = strtok_s(str, "\t", &str);
-            strcmp(token_table[token_line]->operator,t);
+            token_table[token_line]->operator=t;
         }
         else if (strchr(str, '.'))//comment만 존재하거나 .만 찍힌 줄일 경우
         {
@@ -218,7 +220,7 @@ int token_parsing(char* str)
             else token_table[token_line]->operator = NULL;
         }
 
-        if (!strlen(str) || str[0] == '\0' || str==NULL || str[0]=='\n'||str[0]=='.')
+        if (!strlen(str) || str[0] == '\0' || str == NULL || str[0] == '\n' || str[0] == '.')
         {
             return 0;
         }
@@ -226,18 +228,18 @@ int token_parsing(char* str)
         {
             int count = 0;
             int c2 = 0;
-            int i=0;
+            int i = 0;
             if (str[0] != "\t")//operands 존재
             {
-                while(i<strlen(str) && str[i]!='\n')
+                while (i < strlen(str) && str[i] != '\n')
                 {
                     if (str[i] == '\t')
                     {
                         break;
                     }
-                    else if (str[i] != ',' && str[i]!='\t')
+                    else if (str[i] != ',' && str[i] != '\t')
                     {
-                        token_table[token_line]->operand[count][c2]=str[i];
+                        token_table[token_line]->operand[count][c2] = str[i];
                         c2++;
                     }
                     else if (str[i] == ',')
@@ -259,12 +261,12 @@ int token_parsing(char* str)
                     }
                     token_table[token_line]->comment[count] = '\0';
                 }
-               
+
             }
             else if (str[0] == "\t")//operand 미존재
             {
                 int count = 0;
-                i =2;
+                i = 2;
                 for (i; i < strlen(str); i++)
                 {
                     strcpy(token_table[token_line]->comment[count], str[i]);
@@ -275,8 +277,9 @@ int token_parsing(char* str)
 
         return err;
     }
-    
+
 }
+
 
 
 /* ----------------------------------------------------------------------------------
@@ -363,7 +366,7 @@ static int assem_pass1(void)
                 locctr = 0;//controlsection이 넘어가 초기화해줌.
             }
         }
-        token_table[token_line]->section = section_count - 1;
+        token_table[token_line]->section = (section_count - 1);
         if (input_data[i][0] != '.')
         {
             token_table[token_line]->addr = locctr;
@@ -379,8 +382,10 @@ static int assem_pass1(void)
             sym_table[symbol_count].symbol[0] = "\0";
             strcpy(sym_table[symbol_count].symbol, token_table[token_line]->label);
             sym_table[symbol_count].addr = locctr;
-            sym_table[symbol_count].section = section_count - 1;
+            sym_table[symbol_count].section = 0;
+            token_table[token_line]->section = 0;
             symbol_count++;
+            section_count++;
         }
         else if(token_table[token_line]->label!=NULL)
         {
@@ -453,12 +458,12 @@ static int assem_pass1(void)
                 //byte constant의 길이를 구할것임.
                 for (int k = 0; k < strlen(token_table[token_line]->operand[0]); k++)
                 {
-                    if (token_table[token_line]->operand[0][k] == "'" && count == 0)
+                    if (token_table[token_line]->operand[0][k] == '\'' && count == 0)
                     {
                         s = k;
                         count++;
                     }
-                    else if (token_table[token_line]->operand[0][k] == "'" && count == 1)
+                    else if (token_table[token_line]->operand[0][k] == '\'' && count == 1)
                     {
                         e = k;
                         count++;
@@ -483,7 +488,10 @@ static int assem_pass1(void)
     {
         if (token_table[i]->operator)
         {
-            if (token_table[i]->operator[0] == '+')token_table[i]->nixbpe += 1;//e
+            if (token_table[i]->operator[0] == '+')
+            {
+                token_table[i]->nixbpe += 1;//e
+            }
             if (token_table[i]->operand[0][0] != '\0')
             {
                 if (token_table[i]->operand[0][0] == '#')token_table[i]->nixbpe += 16;//i
@@ -580,7 +588,11 @@ static int assem_pass1(void)
                 litcount++;
             }
         }
-        else token_table[i]->is_literal = false;
+        else
+        {
+            token_table[i]->is_literal = false;
+            token_table[i]->literal = NULL;
+        }
     }
     return err;
 }
