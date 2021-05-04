@@ -42,8 +42,11 @@ struct token_unit
     char operand[MAX_OPERAND][20];
     char comment[100];
     char nixbpe;
-    int objectcode;
+    unsigned char objectcode[4];//오브젝트코드 저장
     int addr;//locctr값을 모두 적어주기 위함.
+    int section;//section값 지정.
+    bool is_literal ;//literal인지
+    char* literal;
 };
 
 typedef struct token_unit token;
@@ -70,6 +73,7 @@ struct literal_unit
 {
     char* literal;
     int addr;
+    int section;
 };
 
 typedef struct symbol_unit symbol;
