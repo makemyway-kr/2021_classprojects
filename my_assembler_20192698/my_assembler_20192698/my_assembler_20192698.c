@@ -1,5 +1,5 @@
 /*
- * 화일명 : my_assembler_00000000.c
+ * 화일명 : my_assembler_20192698.c
  * 설  명 : 이 프로그램은 SIC/XE 머신을 위한 간단한 Assembler 프로그램의 메인루틴으로,
  * 입력된 파일의 코드 중, 명령어에 해당하는 OPCODE를 찾아 출력한다.
  * 파일 내에서 사용되는 문자열 "00000000"에는 자신의 학번을 기입한다.
@@ -40,9 +40,11 @@ int main(int args, char* arg[])
         printf("assem_pass1: 패스1 과정에서 실패하였습니다.  \n");
         return -1;
     }
-    make_symtab_output("");
-    make_literaltab_output("");
- 
+    make_symtab_output("symtab_20192698");
+    
+    make_literaltab_output("literaltab_20192698");
+    
+    
     if (assem_pass2() < 0)
     {
         printf(" assem_pass2: 패스2 과정에서 실패하였습니다.  \n");
@@ -50,6 +52,7 @@ int main(int args, char* arg[])
     }
 
     make_objectcode_output("output_20192698");
+    
     return 0;
 
 }
@@ -241,7 +244,7 @@ int token_parsing(char* str)
                         token_table[token_line]->operand[count][c2] = str[i];
                         c2++;
                     }
-                    else if (str[i] == ',')
+                    else if (str[i] == ','||str[i]=="\n"||str[i]=="\t")
                     {
                         token_table[token_line]->operand[count][c2] = '\0';
                         count++;
@@ -358,17 +361,19 @@ static int assem_pass1(void)
         {
             if (strcmp(token_table[token_line]->operator,"CSECT") == 0)
             {
-                progrlength += locctr;
-                progrlength -= sttadd;
+                progrlength[section_count] = locctr;
+                progrlength[section_count] -= sttadd;
                 eachsection[section_count] = token_line;
                 section_count++;
                 locctr = 0;//controlsection이 넘어가 초기화해줌.
+                token_table[token_line]->addr = locctr;
+               
             }
         }
-        token_table[token_line]->section = (section_count - 1);
         if (input_data[i][0] != '.')
         {
             token_table[token_line]->addr = locctr;
+            token_table[token_line]->section = (section_count);
         }
         if (token_line == 0)//처음 loccation저장,10진수로 바꿔 저장함.
         {
@@ -383,11 +388,13 @@ static int assem_pass1(void)
             sym_table[symbol_count].addr = locctr;
             sym_table[symbol_count].section = 0;
             token_table[token_line]->section = 0;
+            eachsection[section_count ] = token_line;
             symbol_count++;
             section_count++;
         }
         else if(token_table[token_line]->label!=NULL)
         {
+
             if (strcmp(token_table[token_line - 1]->operator,"EQU") == 0 && strcmp(token_table[token_line]->operator,"EQU") == 0)
             {
                 token_table[token_line]->addr = atoi(token_table[token_line - 2]->operand[0]);
@@ -412,6 +419,7 @@ static int assem_pass1(void)
         }
         if (token_table[token_line]->operator!=NULL)
         {
+            token_table[token_line]->section = (section_count);
             int retid = search_opcode(token_table[token_line]->operator);
             if (strchr(token_table[token_line]->operator,'+')!=NULL)
             {
@@ -662,11 +670,11 @@ void make_literaltab_output(char* filen_ame)
     else
     {
         FILE* f = fopen(filen_ame, "w");
-        for (int i = 0; i < symbol_count; i++)
+        for (int i = 0; i < litcount; i++)
         {
             fwrite(literal_table[i].literal, sizeof(char) * strlen(literal_table[i].literal), 1, f);
             fwrite("\t", sizeof("\t"), 1, f);
-            fprintf(f, "%02X", sym_table[i].addr);
+            fprintf(f, "%X", literal_table[i].addr);
             fwrite("\n", sizeof("\n"), 1, f);
         }
         fclose(f);
@@ -685,6 +693,7 @@ void make_literaltab_output(char* filen_ame)
 */
 static int assem_pass2(void)
 {
+    int err = 0;
     for (int i = 0; i < token_line; i++)
     {
         bool start = false;
@@ -710,7 +719,7 @@ static int assem_pass2(void)
             int opc = search_opcode(token_table[i]->operator);
             if (opc != -1)
             {
-                if ((token_table[i]->nixbpe &1)==1)//4형식
+                if ((token_table[i]->nixbpe & 1) == 1)//4형식
                 {
 
                     if (token_table[i]->operand[0][0] != '\0')
@@ -721,7 +730,7 @@ static int assem_pass2(void)
                             for (int issym = 0; issym < symbol_count; issym++)//현재 section에 symbol이 있는지 파악 후 계산
                             {
 
-                                if (strcmp(sym_table[issym].symbol, strtok(token_table[i]->operand[0], "@")) == 0 && sym_table[issym].section == currsection - 1)
+                                if (strcmp(sym_table[issym].symbol, strtok(token_table[i]->operand[0], "@")) == 0 && sym_table[issym].section == currsection)
                                 {
                                     token_table[i]->nixbpe += 2;//pc relatvie
                                     temporarymarker = 1;
@@ -750,7 +759,7 @@ static int assem_pass2(void)
                             for (int issym = 0; issym < symbol_count; issym++)//현재 section에 symbol이 있는지 파악 후 계산
                             {
 
-                                if (strcmp(sym_table[issym].symbol, token_table[i]->operand[0]) == 0 && sym_table[issym].section == currsection - 1)
+                                if (strcmp(sym_table[issym].symbol, token_table[i]->operand[0]) == 0 && sym_table[issym].section == currsection )
                                 {
                                     temporarymarker = 1;
                                     char tempni = 0;
@@ -883,7 +892,7 @@ static int assem_pass2(void)
                         }
                     }
                 }
-                
+
                 else if (inst_table[opc]->format == 3)
                 {
                     if (token_table[i]->operand[0][0] != '\0')
@@ -894,7 +903,7 @@ static int assem_pass2(void)
                             for (int issym = 0; issym < symbol_count; issym++)//현재 section에 symbol이 있는지 파악 후 계산
                             {
 
-                                if (strcmp(sym_table[issym].symbol, strtok(token_table[i]->operand[0], "@")) == 0 && sym_table[issym].section == currsection - 1)
+                                if (strcmp(sym_table[issym].symbol, strtok(token_table[i]->operand[0], "@")) == 0 && sym_table[issym].section == currsection)
                                 {
                                     token_table[i]->nixbpe += 2;//pc relatvie
                                     temporarymarker = 1;
@@ -921,7 +930,7 @@ static int assem_pass2(void)
                             for (int issym = 0; issym < symbol_count; issym++)//현재 section에 symbol이 있는지 파악 후 계산
                             {
 
-                                if (strcmp(sym_table[issym].symbol, token_table[i]->operand[0]) == 0 && sym_table[issym].section == currsection - 1)
+                                if (strcmp(sym_table[issym].symbol, token_table[i]->operand[0]) == 0 && sym_table[issym].section == currsection )
                                 {
                                     temporarymarker = 1;
                                     char tempni = 0;
@@ -940,9 +949,9 @@ static int assem_pass2(void)
                             }
                             if (temporarymarker == 0)
                             {
-                                if ((token_table[i]->nixbpe & 16) == 16 && (token_table[i]->nixbpe&32)!=32)//immediate
+                                if ((token_table[i]->nixbpe & 16) == 16 && (token_table[i]->nixbpe & 32) != 32)//immediate
                                 {
-                                    
+
                                     char tempni = 0;
                                     token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)1;
                                     tempni = token_table[i]->nixbpe - 16;
@@ -963,7 +972,7 @@ static int assem_pass2(void)
                                             token_table[i]->objectcode[0] = inst_table[opc]->op + (unsigned char)3;
                                             tempni = token_table[i]->nixbpe - 48;
                                             token_table[i]->objectcode[1] = (unsigned char)tempni;
-                                            token_table[i]->objectcode[2] = (unsigned char)((literal_table[j].addr - token_table[i + 1]->addr) );
+                                            token_table[i]->objectcode[2] = (unsigned char)((literal_table[j].addr - token_table[i + 1]->addr));
 
                                         }
 
@@ -991,15 +1000,81 @@ static int assem_pass2(void)
                         token_table[i]->objectcode[2] = 0;
                     }
                 }
-                
-              
+
+
 
             }
-
+        
+            else if (strcmp(token_table[i]->operator,"WORD") == 0 || strcmp(token_table[i]->operator,"BYTE"))
+            {
+                if (strcmp(token_table[i]->operator,"WORD") == 0)
+                {
+                    char* temp=malloc(sizeof(token_table[i]->operand[0]));
+                    strcpy(temp, token_table[i]->operand[0]);
+                    char* temp2 = strtok(temp, "-");
+                    char* temp3 = strtok(NULL, "-");
+                    int found1 = 0;
+                    int found2 = 0;
+                    for(int ksearchsym=0;ksearchsym<symbol_count;ksearchsym++)
+                    {
+                        if (strcmp(sym_table[ksearchsym].symbol, temp2) == 0 && sym_table[ksearchsym].section == token_table[i]->section)
+                        {
+                            found1 = ksearchsym;
+                        }
+                        else if (strcmp(sym_table[ksearchsym].symbol, temp3) == 0 && sym_table[ksearchsym].section == token_table[i]->section)
+                        {
+                            found2 = ksearchsym;
+                        }
+                    }
+                    if(found1!=0 && found2!=0)
+                    {
+                        token_table[i]->objectcode[0] = (unsigned char)(sym_table[found1].addr - sym_table[found2].addr);
+                        token_table[i]->objectcode[1] = 0;
+                        token_table[i]->objectcode[2] = 0;
+                    }
+                    else
+                    {
+                        token_table[i]->objectcode[0] = 0;
+                        token_table[i]->objectcode[1] = 0;
+                        token_table[i]->objectcode[2] = 0;
+                    }
+                }
+                else if (strcmp(token_table[i]->operator,"BYTE") == 0)
+                {
+                    int s = 0;
+                    int e = 0;
+                    int count = 0;
+                  
+                    for (int k = 0; k < strlen(token_table[token_line]->operand[0]); k++)
+                    {
+                        if (token_table[token_line]->operand[0][k] == '\'' && count == 0)
+                        {
+                            s = k;
+                            count++;
+                        }
+                        else if (token_table[token_line]->operand[0][k] == '\'' && count == 1)
+                        {
+                            e = k;
+                            count++;
+                        }
+                    }
+                    unsigned char* numbbb = malloc(sizeof(char) * (e - s) + 2);
+                    numbbb[0] = "0";
+                    numbbb[1] = "x";
+                    count = 2;
+                    for (int k = s + 1; k < e; k++)
+                    {
+                        numbbb[count] = token_table[token_line]->operand[0][k];
+                    }
+                    int temper = strtol(numbbb, NULL, 16);
+                    token_table[i]->objectcode[0] = (unsigned char)temper;
+                }
+            }
         }
     }
-       
+    return err;
 }
+
 
 /* ----------------------------------------------------------------------------------
 * 설명 : 입력된 문자열의 이름을 가진 파일에 프로그램의 결과를 저장하는 함수이다.
@@ -1013,13 +1088,14 @@ static int assem_pass2(void)
 */
 void make_objectcode_output(char* file_name)
 {
+    /*
     for (int i = 0; i < token_line; i++)
     {
-        printf("%X %s",token_table[i]->addr, token_table[i]->operator);
+        printf("%X %s   :", token_table[i]->addr, token_table[i]->operator);
         for (int j = 0; j < 4; j++)
         {
-            
-            if (token_table[i]->objectcode[j] != 256)
+
+            if (token_table[i]->objectcode[j] != (unsigned char)255)
             {
                 if (j == 0)
                 {
@@ -1033,13 +1109,300 @@ void make_objectcode_output(char* file_name)
                 {
                     printf("%03X", token_table[i]->objectcode[j]);
                 }
-                else if (j == 3)
+                else if (j == 3 && token_table[i]->operator[0]=='+')
                 {
                     printf("%02X", token_table[i]->objectcode[j]);
                 }
             }
         }
         printf("\n");
-
     }
+    */
+    
+    if (*file_name == NULL)
+    {
+        int refindex = 0;
+        int countforsection = 0;
+        int loop = 0;
+        for (int i = 0; i < token_line; i++)
+        {
+            int linecount = 0;//줄마다 길이 측정.
+            if (i == eachsection[countforsection])
+            {
+                
+                if (i != 0)
+                {
+                    
+                    for (int modi = eachsection[countforsection - 1];modi<eachsection[countforsection];modi++)
+                    {
+                        if (token_table[refindex]->operand[0][0] != '\0')
+                        {
+                            if (strstr(token_table[modi]->operand[0], token_table[refindex]->operand[0]) !=NULL)
+                            {
+                                if (strchr(token_table[modi]->operand[0], "-") != NULL)
+                                {
+                                    printf("M %X %02X +%s\n", token_table[modi]->addr,6,strtok(token_table[modi]->operand[0], "-"));
+                                    printf("M %X %02X -%s\n", token_table[modi]->addr, 6, strtok(NULL, "-"));
+                                }
+                                else
+                                {
+                                    printf("M %X %02X +%s\n", token_table[modi]->addr + 1, 5, token_table[modi]->operand[0]);
+                                }
+                            }
+                        }                     
+                        
+                    }
+                }
+               
+                printf("H%s", token_table[i]->label);
+                printf("%06X %06X\n", sttadd, progrlength[countforsection]);
+                countforsection++;
+            }
+            else if (token_table[i]->operator!=NULL)
+            {
+                if (strcmp(token_table[i]->operator,"EXTDEF") == 0)
+                {
+                    printf("D");
+                    for (int j = 0; j < MAX_OPERAND; j++)
+                    {
+                        if (token_table[i]->operand[j][0] != '\0')
+                        {
+                            for (int searsym = 0; searsym < symbol_count; searsym++)
+                            {
+                                if (strcmp(sym_table[searsym].symbol, token_table[i]->operand[j]) == 0)
+                                {
+                                    printf("%s%X", token_table[i]->operand[j], sym_table[searsym].addr);
+                                }
+                            }
+                        }
+                    }
+                    printf("\n");
+                }
+                else if (strcmp(token_table[i]->operator,"EXTREF") == 0)
+                {
+                    refindex = i;
+                    printf("R");
+                    for (int j = 0; j < MAX_OPERAND; j++)
+                    {
+                        if (token_table[i]->operand[j][0] != '\0')
+                        {
+                            printf("%s\t", token_table[i]->operand[j]);
+                        }
+                    }
+                    printf("\n");
+                }
+                else
+                {
+                    int j = i;
+                    int endofthisline = 0;
+                    int lineco = 0;
+                    for (j; j < eachsection[countforsection]; j++)
+                    {
+                        if (token_table[j]->objectcode[0] != 255)
+                        {
+                            linecount += 2;
+                        }
+                        if (token_table[j]->objectcode[1] != 255)
+                        {
+                            linecount += 1;
+                        }
+                        if (token_table[j]->objectcode[2] != 255)
+                        {
+                            linecount += 3;
+                        }
+                        if (token_table[j]->objectcode[3] != 255)
+                        {
+                            linecount += 2;
+                        }
+                        if (linecount > 30)
+                        {
+                            endofthisline = j-1;
+                            j = token_line - 1;
+                        }
+                        if(linecount<=30)
+                        {
+                            lineco = linecount;
+                            endofthisline = j - 1;
+                        }
+                    }
+                    printf("T %06X %02X", token_table[i]->addr,lineco);
+                    for (int k = i; k <= endofthisline; k++)
+                    {
+                        for (int l = 0; l < 4; l++)
+                        {
+                            if (token_table[k]->objectcode[l] != 255)
+                            {
+                                if (l == 0)
+                                {
+                                    printf("%02X", token_table[k]->objectcode[l]);
+                                }
+                                else if (l == 1)
+                                {
+                                    printf("%X", token_table[k]->objectcode[l]);
+                                }
+                                else if (l == 2)
+                                {
+                                    printf("%03X", token_table[k]->objectcode[l]);
+                                }
+                                else if (l == 3)
+                                {
+                                    printf("%02X", token_table[k]->objectcode[l]);
+                                }
+                            }
+                        }
+                    }
+                    printf("\n");
+                    i = endofthisline;
+
+                }
+            }
+            loop++;
+            if (loop > token_line)return -1;
+        }
+    }
+    else
+    {
+        FILE* f = fopen(file_name, "w");
+        int refindex = 0;
+        int countforsection = 0;
+        int loop = 0;
+        for (int i = 0; i < token_line; i++)
+        {
+            int linecount = 0;//줄마다 길이 측정.
+            if (i == eachsection[countforsection])
+            {
+
+                if (i != 0)
+                {
+
+                    for (int modi = eachsection[countforsection - 1]; modi < eachsection[countforsection]; modi++)
+                    {
+                        if (token_table[refindex]->operand[0][0] != '\0')
+                        {
+                            if (strstr(token_table[modi]->operand[0], token_table[refindex]->operand[0]) != NULL)
+                            {
+                                if (strchr(token_table[modi]->operand[0], "-") != NULL)
+                                {
+                                    fprintf(f,"M %X %02X +%s\n", token_table[modi]->addr, 6, strtok(token_table[modi]->operand[0], "-"));
+                                    fprintf(f,"M %X %02X -%s\n", token_table[modi]->addr, 6, strtok(NULL, "-"));
+                                }
+                                else
+                                {
+                                    fprintf(f,"M %X %02X +%s\n", token_table[modi]->addr + 1, 5, token_table[modi]->operand[0]);
+                                }
+                            }
+                        }
+
+                    }
+                }
+
+                fprintf(f,",H%s", token_table[i]->label);
+                fprintf(f,"%X%X\n", sttadd, progrlength[countforsection]);
+                countforsection++;
+            }
+            else if (token_table[i]->operator!=NULL)
+            {
+                if (strcmp(token_table[i]->operator,"EXTDEF") == 0)
+                {
+                    fprintf(f,"D");
+                    for (int j = 0; j < MAX_OPERAND; j++)
+                    {
+                        if (token_table[i]->operand[j][0] != '\0')
+                        {
+                            for (int searsym = 0; searsym < symbol_count; searsym++)
+                            {
+                                if (strcmp(sym_table[searsym].symbol, token_table[i]->operand[j]) == 0)
+                                {
+                                    fprintf(f,"%s%X", token_table[i]->operand[j], sym_table[searsym].addr);
+                                }
+                            }
+                        }
+                    }
+                    fprintf(f,"\n");
+                }
+                else if (strcmp(token_table[i]->operator,"EXTREF") == 0)
+                {
+                    refindex = i;
+                    fprintf(f,"R");
+                    for (int j = 0; j < MAX_OPERAND; j++)
+                    {
+                        if (token_table[i]->operand[j][0] != '\0')
+                        {
+                            fprintf(f,"%s", token_table[i]->operand[j]);
+                        }
+                    }
+                    fprintf(f,"\n");
+                }
+                else
+                {
+                    int j = i;
+                    int endofthisline = 0;
+                    int lineco = 0;
+                    for (j; j < eachsection[countforsection]; j++)
+                    {
+                        if (token_table[j]->objectcode[0] != 255)
+                        {
+                            linecount += 2;
+                        }
+                        if (token_table[j]->objectcode[1] != 255)
+                        {
+                            linecount += 1;
+                        }
+                        if (token_table[j]->objectcode[2] != 255)
+                        {
+                            linecount += 3;
+                        }
+                        if (token_table[j]->objectcode[3] != 255)
+                        {
+                            linecount += 2;
+                        }
+                        if (linecount > 30)
+                        {
+                            endofthisline = j - 1;
+                            j = token_line - 1;
+                        }
+                        if (linecount <= 30)
+                        {
+                            lineco = linecount;
+                            endofthisline = j - 1;
+                        }
+                    }
+                    fprintf(f,"T%06X%02X", token_table[i]->addr, lineco);
+                    for (int k = i; k <= endofthisline; k++)
+                    {
+                        for (int l = 0; l < 4; l++)
+                        {
+                            if (token_table[k]->objectcode[l] != 255)
+                            {
+                                if (l == 0)
+                                {
+                                    fprintf(f,"%02X", token_table[k]->objectcode[l]);
+                                }
+                                else if (l == 1)
+                                {
+                                    fprintf(f,"%X", token_table[k]->objectcode[l]);
+                                }
+                                else if (l == 2)
+                                {
+                                    fprintf(f,"%03X", token_table[k]->objectcode[l]);
+                                }
+                                else if (l == 3)
+                                {
+                                    fprintf(f,"%02X", token_table[k]->objectcode[l]);
+                                }
+                            }
+                        }
+                    }
+                    fprintf(f,"\n");
+                    i = endofthisline;
+
+                }
+            }
+            loop++;
+            if (loop > token_line)return -1;
+
+        }
+        fclose(f);
+    }
+    
 }

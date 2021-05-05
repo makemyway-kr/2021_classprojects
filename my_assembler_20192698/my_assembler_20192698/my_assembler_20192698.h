@@ -73,7 +73,7 @@ struct literal_unit
 {
     char* literal;
     int addr;
-    int section;
+    int section;//몇번째 섹션인지.저장해 주기 위하여 추가.
 };
 
 typedef struct symbol_unit symbol;
@@ -82,7 +82,7 @@ static int symbol_count = 0;//symbol의 갯수 저장 변수
 typedef struct literal_unit literal;
 literal literal_table[MAX_LINES];
 static int litcount;//리터럴 테이블의 갯수를 새어주기위한 변수.
-static int progrlength = 0;
+static int progrlength[3];
 int sttadd = 0;//starting address
 int eachsection[5] = { 0,0,0,0,0 };//각 섹션의 시작 토큰번호 저장.
 static int locctr;
