@@ -40,9 +40,9 @@ int main(int args, char* arg[])
         printf("assem_pass1: 패스1 과정에서 실패하였습니다.  \n");
         return -1;
     }
-    make_symtab_output("symtab_20192698");
+    make_symtab_output("");
     
-    make_literaltab_output("literaltab_20192698");
+    make_literaltab_output("");
     
     
     if (assem_pass2() < 0)
@@ -361,8 +361,8 @@ static int assem_pass1(void)
         {
             if (strcmp(token_table[token_line]->operator,"CSECT") == 0)
             {
-                progrlength[section_count] = locctr;
-                progrlength[section_count] -= sttadd;
+                progrlength[section_count-1] = locctr;
+                progrlength[section_count-1] -= sttadd;
                 eachsection[section_count] = token_line;
                 section_count++;
                 locctr = 0;//controlsection이 넘어가 초기화해줌.
@@ -500,14 +500,23 @@ static int assem_pass1(void)
             }
             if (token_table[i]->operand[0][0] != '\0')
             {
-                if (token_table[i]->operand[0][0] == '#')token_table[i]->nixbpe += 16;//i
-                else if (token_table[i]->operand[0][0] == '@')token_table[i]->nixbpe += 32;//n
+                if (token_table[i]->operand[0][0] == '#')
+                {
+                    token_table[i]->nixbpe += 16;//i
+                }
+                else if (token_table[i]->operand[0][0] == '@')
+                {
+                    token_table[i]->nixbpe += 32;//n
+                }
                 else
                 {
                     token_table[i]->nixbpe += 48;//simple addressing
                 }
             }
-            else token_table[i]->nixbpe += 48;//simple addressing
+            else
+            {
+                token_table[i]->nixbpe += 48;
+            }//simple addressing
             if (token_table[i]->operand[1][0] != '\0')
             {
                 if (token_table[i]->operand[1][0] == 'X')

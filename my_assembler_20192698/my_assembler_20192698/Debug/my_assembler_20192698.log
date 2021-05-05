@@ -22,17 +22,17 @@ C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(4
 C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(465,35): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
 C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(479,32): warning C4047: '=': 'char'의 간접 참조 수준이 'char [2]'과(와) 다릅니다.
 C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(480,32): warning C4047: '=': 'char'의 간접 참조 수준이 'char [2]'과(와) 다릅니다.
-C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(625,27): warning C4047: '==': 'int'의 간접 참조 수준이 'void *'과(와) 다릅니다.
-C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(660,27): warning C4047: '==': 'int'의 간접 참조 수준이 'void *'과(와) 다릅니다.
-C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1048,39): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
-C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1062,36): warning C4047: '=': 'unsigned char'의 간접 참조 수준이 'char [2]'과(와) 다릅니다.
-C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1063,36): warning C4047: '=': 'unsigned char'의 간접 참조 수준이 'char [2]'과(와) 다릅니다.
-C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1122,27): warning C4047: '==': 'int'의 간접 참조 수준이 'void *'과(와) 다릅니다.
-C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1142,78): warning C4047: '함수': 'int'의 간접 참조 수준이 'char [2]'과(와) 다릅니다.
-C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1142,75): warning C4024: 'strchr': 형식 및 실제 매개 변수 2의 형식이 서로 다릅니다.
-C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1260,44): warning C4098: 'make_objectcode_output': 'void' 함수에서 값을 반환하고 있습니다.
-C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1284,78): warning C4047: '함수': 'int'의 간접 참조 수준이 'char [2]'과(와) 다릅니다.
-C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1284,75): warning C4024: 'strchr': 형식 및 실제 매개 변수 2의 형식이 서로 다릅니다.
-C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1402,44): warning C4098: 'make_objectcode_output': 'void' 함수에서 값을 반환하고 있습니다.
+C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(634,27): warning C4047: '==': 'int'의 간접 참조 수준이 'void *'과(와) 다릅니다.
+C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(669,27): warning C4047: '==': 'int'의 간접 참조 수준이 'void *'과(와) 다릅니다.
+C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1057,39): warning C4018: '<': signed 또는 unsigned가 일치하지 않습니다.
+C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1071,36): warning C4047: '=': 'unsigned char'의 간접 참조 수준이 'char [2]'과(와) 다릅니다.
+C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1072,36): warning C4047: '=': 'unsigned char'의 간접 참조 수준이 'char [2]'과(와) 다릅니다.
+C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1131,27): warning C4047: '==': 'int'의 간접 참조 수준이 'void *'과(와) 다릅니다.
+C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1151,78): warning C4047: '함수': 'int'의 간접 참조 수준이 'char [2]'과(와) 다릅니다.
+C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1151,75): warning C4024: 'strchr': 형식 및 실제 매개 변수 2의 형식이 서로 다릅니다.
+C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1269,44): warning C4098: 'make_objectcode_output': 'void' 함수에서 값을 반환하고 있습니다.
+C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1293,78): warning C4047: '함수': 'int'의 간접 참조 수준이 'char [2]'과(와) 다릅니다.
+C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1293,75): warning C4024: 'strchr': 형식 및 실제 매개 변수 2의 형식이 서로 다릅니다.
+C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(1411,44): warning C4098: 'make_objectcode_output': 'void' 함수에서 값을 반환하고 있습니다.
 C:\2021ssu\my_assembler_20192698\my_assembler_20192698\my_assembler_20192698.c(283): warning C4715: 'token_parsing': 모든 제어 경로에서 값을 반환하지는 않습니다.
   my_assembler_20192698.vcxproj -> C:\2021ssu\my_assembler_20192698\Debug\my_assembler_20192698.exe
