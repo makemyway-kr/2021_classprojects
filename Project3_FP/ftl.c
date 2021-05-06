@@ -15,13 +15,65 @@
 // 초기화 등의 작업을 수행한다. 따라서, 첫 번째 ftl_write() 또는 ftl_read()가 호출되기 전에
 // file system에 의해 반드시 먼저 호출이 되어야 한다.
 //
+
+int **addmapt;//address mapping table
+int spare;//spare block초기값은 제일 끝의 블럭을 사용함.
 void ftl_open()
 {
-	//
-	// address mapping table 초기화 또는 복구
-	// free block's pbn 초기화
-    	// address mapping table에서 lbn 수는 DATABLKS_PER_DEVICE 동일
-	
+	addmapt=malloc(sizeof(int*)*BLOCKS_PER_DEVICE);
+	for(int i=0;i<BLOCKS_PER_DEVICE;i++)//address maping table 초기화.
+	{
+		addmapt[i]=malloc(sizeof(int)*2);
+		addmapt[i][0]=i;//lbn넣어줌.
+	}
+	int countof0xff=0;
+	char* buf = (char *)malloc(PAGE_SIZE);
+	for(int i=0;i<PAGES_PER_BLOCK*BLOCKS_PER_DEVICE;i++)
+	{
+		dd_read(i,buf);
+		if(*buf==-1)
+		{
+			countof0xff++;
+		}
+		memset(buf,'\0',PAGE_SIZE);
+	}
+	if(countof0xff==PAGES_PER_BLOCK*BLOCKS_PER_DEVICE)//기존 flash memory file이 없어 0xff로 모두 초기화되어있는경우
+	{
+		for(int i=0;i<BLOCKS_PER_DEVICE;i++)
+		{
+			addmapt[i][1]=-1;//pbn -1로 초기화
+		}
+		spare=BLOCKS_PER_DEVICE-1;//spare block index의 초기값은 제일 끝의 블럭을 사용함.
+	}
+	else//flash memory file이 존재.
+	{
+		for(int i=0;i<BLOCKS_PER_DEVICE;i++)
+		{
+			dd_read(i*PAGES_PER_BLOCK,buf);
+			char*bufforlbn=malloc(4);
+			int countlbnindex=0;
+			if(*buf!=-1)//block이 할당이 되어있으면
+			{
+				for(int i=(512/sizeof(char));i<(512/sizeof(char))+4;i++)
+				{
+					bufforlbn[countlbnindex]=buf[i];
+					countlbnindex++;
+				}
+				addmapt[atoi(bufforlbn)][1]=i;
+			}
+			free(bufforlbn);
+		}
+		for(int i=0;i<BLOCKS_PER_DEVICE;i++)
+		{
+			if(addmapt[i][1]==-1)
+			{
+				spare=i;
+				i=BLOCKS_PER_DEVICE-1;//비어있는 pbn중 가장 앞의것을 spare로 지정함.
+			}
+		}
+	}
+	free(buf);
+
 	return;
 }
 
@@ -31,7 +83,34 @@ void ftl_open()
 //
 void ftl_read(int lsn, char *sectorbuf)
 {
-
+	int lbnnow=lsn/PAGES_PER_BLOCK;
+	char*pagebufff=malloc(PAGE_SIZE);
+	for(int i=0;i<PAGES_PER_BLOCK;i++)
+	{
+		char*bufforlsn=malloc(4);
+		dd_read((addmapt[lbnnow][1]*PAGES_PER_BLOCK)+i,pagebufff);
+		int countforlsn=0;
+		for(int j=(512/sizeof(char))+4;j<(512/sizeof(char))+8;j++)//lsn복사
+		{
+			bufforlsn[countforlsn]=pagebufff[j];
+			countforlsn++;
+		}
+		if(atoi(bufforlsn)==lsn)
+		{
+			break;
+		}
+		else
+		{
+			memset(pagebufff,-1,PAGE_SIZE);
+		}
+		free(bufforlsn);
+		
+	}
+	for(int j=0;j<SECTOR_SIZE;j++)
+	{
+		sectorbuf[j]=pagebufff[j];
+	}
+	free(pagebufff);
 	return;
 }
 
@@ -41,6 +120,54 @@ void ftl_read(int lsn, char *sectorbuf)
 //
 void ftl_write(int lsn, char *sectorbuf)
 {
+	char is_there_lsn_already=FALSE;//동일한 LSN이 있는지
+	int lbnnow=lsn/PAGES_PER_BLOCK;
+	char*pagebufff=malloc(PAGE_SIZE);//page를 받아오는 buffer
+	if(addmapt[lbnnow][1]!=-1)//이미 최소 하나가 들어가있는 block이면
+	{
+		for(int i=0;i<PAGES_PER_BLOCK;i++)
+		{
+			char*bufforlsn=malloc(4);
+			dd_read((addmapt[lbnnow][1]*PAGES_PER_BLOCK)+i,pagebufff);
+			int countforlsn=0;
+			for(int j=(512/sizeof(char))+4;j<(512/sizeof(char))+8;j++)//lsn복사
+			{
+				bufforlsn[countforlsn]=pagebufff[j];
+				countforlsn++;
+			}
+			if(atoi(bufforlsn)==lsn)
+			{
+				is_there_lsn_already=TRUE;
+				break;
+			}
+			else
+			{
+				memset(pagebufff,-1,PAGE_SIZE);
+			}
+			free(bufforlsn);
+		
+		}
+		memset(pagebufff,-1,PAGE_SIZE);
+		if(is_there_lsn_already==TRUE)//overwrite해줘야할 경우
+		{
+			for(int j=0;j<PAGES_PER_BLOCK;j++)
+			{
+				dd_read(addmapt[lbnnow][1]*PAGES_PER_BLOCK+j,pagebufff);
+				dd_write(spare*PAGES_PER_BLOCK+j,pagebufff);
+				memset(pagebufff,-1,PAGE_SIZE);
+			}
+			addmapt[lbnnow][1]=spare;//spare block을 lbn에 새로 할당해줌.
+		}
+		else//overwrite하지 않아도 되는 경우
+		{
+
+		}
+	
+	}
+	else//비어있는(table에 할당이 안된)lbn이라면
+	{
+
+	}
 
 	return;
 }
