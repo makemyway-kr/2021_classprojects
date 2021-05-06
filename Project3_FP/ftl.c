@@ -92,7 +92,7 @@ void ftl_read(int lsn, char *sectorbuf)
 		int countforlsn=0;
 		for(int j=(512/sizeof(char))+4;j<(512/sizeof(char))+8;j++)//lsn복사
 		{
-			bufforlsn[countforlsn]=pagebufff[j];
+			bufforlsn[countforlsn]=pagebufff[j];//옮겨담음.
 			countforlsn++;
 		}
 		if(atoi(bufforlsn)==lsn)
@@ -123,6 +123,7 @@ void ftl_write(int lsn, char *sectorbuf)
 	char is_there_lsn_already=FALSE;//동일한 LSN이 있는지
 	int lbnnow=lsn/PAGES_PER_BLOCK;
 	char*pagebufff=malloc(PAGE_SIZE);//page를 받아오는 buffer
+	int index_to_overwrite=0;
 	if(addmapt[lbnnow][1]!=-1)//이미 최소 하나가 들어가있는 block이면
 	{
 		for(int i=0;i<PAGES_PER_BLOCK;i++)
@@ -135,9 +136,10 @@ void ftl_write(int lsn, char *sectorbuf)
 				bufforlsn[countforlsn]=pagebufff[j];
 				countforlsn++;
 			}
-			if(atoi(bufforlsn)==lsn)
+			if(atoi(bufforlsn)==lsn)//해당 lsn이 적힌 페이지가 존재함.
 			{
 				is_there_lsn_already=TRUE;
+				index_to_overwrite=i;
 				break;
 			}
 			else
@@ -152,15 +154,50 @@ void ftl_write(int lsn, char *sectorbuf)
 		{
 			for(int j=0;j<PAGES_PER_BLOCK;j++)
 			{
-				dd_read(addmapt[lbnnow][1]*PAGES_PER_BLOCK+j,pagebufff);
-				dd_write(spare*PAGES_PER_BLOCK+j,pagebufff);
+				if(j!=index_to_overwrite)
+				{
+					dd_read(addmapt[lbnnow][1]*PAGES_PER_BLOCK+j,pagebufff);
+					dd_write(spare*PAGES_PER_BLOCK+j,pagebufff);
+				}
+				
 				memset(pagebufff,-1,PAGE_SIZE);
 			}
+			memset(pagebufff,-1,PAGE_SIZE);
+			for(int j=0;j<SECTOR_SIZE;j++)//섹터 복사
+			{
+				pagebufff[j]=sectorbuf[j];
+			}
+			char*lbnlsnbuff=malloc(4);
+			memcpy(lbnlsnbuff,lbnnow,4);//lbn복사
+			for(int j=SECTOR_SIZE;j<SECTOR_SIZE+4;j++)
+			{
+				pagebufff[j]=lbnlsnbuff[j];
+			}
+			memset(lbnlsnbuff,-1,4);
+			memcpy(lbnlsnbuff,lsn,4);//lsn복사
+			for(int j=SECTOR_SIZE+4;j<SECTOR_SIZE+8;j++)
+			{
+				pagebufff[j]=lbnlsnbuff[j];
+			}
+			dd_wrtie(spare*PAGES_PER_BLOCK+index_to_overwrite,pagebuff);
+			dd_erase(addmapt[lbnnow][1]);//기존것을 erase해줌.
 			addmapt[lbnnow][1]=spare;//spare block을 lbn에 새로 할당해줌.
+			free(lbnlsnbuff);
 		}
 		else//overwrite하지 않아도 되는 경우
 		{
+			for(int j=0;j<PAGES_PER_BLOCK;j++)
+			{
+				dd_read(addmapt[lbnnow][1]*PAGES_PER_BLOCK+j,pagebufff);
+				if(*pagebufff==-1)//빈자리 찾음
+				{
 
+				}
+				else
+				{
+					memset(pagebufff,-1,PAGE_SIZE);
+				}
+			}
 		}
 	
 	}
@@ -168,7 +205,7 @@ void ftl_write(int lsn, char *sectorbuf)
 	{
 
 	}
-
+	free(pagebufff);
 	return;
 }
 
