@@ -15,7 +15,9 @@
 // 초기화 등의 작업을 수행한다. 따라서, 첫 번째 ftl_write() 또는 ftl_read()가 호출되기 전에
 // file system에 의해 반드시 먼저 호출이 되어야 한다.
 //
-
+extern int dd_read();
+extern int dd_write();
+extern int dd_erase();
 int **addmapt;//address mapping table
 int spare;//spare block초기값은 제일 끝의 블럭을 사용함.
 void ftl_open()
@@ -35,6 +37,7 @@ void ftl_open()
 	}
 	int countof0xff=0;
 	char* buf = (char *)malloc(PAGE_SIZE);
+	memset(buf,(char)0xFF,PAGE_SIZE);
 	for(int i=0;i<(PAGES_PER_BLOCK*BLOCKS_PER_DEVICE);i++)//0xff로 되어있는 page의 수를 셈.
 	{
 		dd_read(i,buf);
@@ -42,7 +45,7 @@ void ftl_open()
 		{
 			countof0xff++;
 		}
-		memset(buf,'\0',PAGE_SIZE);
+		memset(buf,(char)0xFF,PAGE_SIZE);
 	}
 	int notusedpbn=0;//사용 안된 pbn저장 for 이미 flash memory file존재하는 경우
 	if(countof0xff==PAGES_PER_BLOCK*BLOCKS_PER_DEVICE)//기존 flash memory file이 없어 0xff로 모두 초기화되어있는경우
@@ -60,15 +63,12 @@ void ftl_open()
 		{
 			dd_read(i*PAGES_PER_BLOCK,buf);
 			char*bufforlbn=malloc(4);
-			int countlbnindex=0;
 			if(*buf!=-1)//block이 할당이 되어있으면
 			{
-				for(int i=(512/sizeof(char));i<(512/sizeof(char))+4;i++)
+				for(int ll=0;ll<4;ll++)
 				{
-					bufforlbn[countlbnindex]=buf[i];
-					countlbnindex++;
+					bufforlbn[ll]=buf[SECTOR_SIZE+ll];
 				}
-				
 				addmapt[atoi(bufforlbn)][1]=i;
 			}
 			else //block(pbn)이 할당이 안되어있으면 freeblock pbn으로
@@ -93,6 +93,7 @@ void ftl_read(int lsn, char *sectorbuf)
 {
 	int lbnnow=lsn/PAGES_PER_BLOCK;
 	char*pagebufff=malloc(PAGE_SIZE);
+	memset(pagebufff,(char)0xFF,PAGE_SIZE);
 	for(int i=0;i<PAGES_PER_BLOCK;i++)
 	{
 		char*bufforlsn=malloc(4);
@@ -109,7 +110,7 @@ void ftl_read(int lsn, char *sectorbuf)
 		}
 		else
 		{
-			memset(pagebufff,-1,PAGE_SIZE);
+			memset(pagebufff,(char)0xFF,PAGE_SIZE);
 		}
 		free(bufforlsn);
 		
@@ -127,24 +128,24 @@ void ftl_write(int lsn, char *sectorbuf)
 {
 	char is_there_lsn_already=FALSE;//동일한 LSN이 있는지
 	int lbnnow=lsn/PAGES_PER_BLOCK;
+	char*emptpage=malloc(PAGE_SIZE);//비어있는 페이지로 비교함.
+	memset(emptpage,(char)0xFF,PAGE_SIZE);
 	char*pagebufff=malloc(PAGE_SIZE);//page를 받아오는 buffer
 	char*newpagebufff=malloc(PAGE_SIZE);//새로 넣을 page
+	memset(newpagebufff,(char)0xFF,PAGE_SIZE);
 	//넣을 데이터 세팅 /////
-	for(int j=0;j<SECTOR_SIZE;j++)//섹터 복사
-	{
-		pagebufff[j]=sectorbuf[j];
-	}
+	memcpy(newpagebufff,sectorbuf,SECTOR_SIZE);
 	char*lbnlsnbuff=malloc(4);
-	memcpy(lbnlsnbuff,lbnnow,4);//lbn복사
+	sprintf(lbnlsnbuff,"%d",lbnnow);
 	for(int j=SECTOR_SIZE;j<SECTOR_SIZE+4;j++)
 	{
-		pagebufff[j]=lbnlsnbuff[j];
+		newpagebufff[j]=lbnlsnbuff[j-SECTOR_SIZE];
 	}
-	memset(lbnlsnbuff,-1,4);
-	memcpy(lbnlsnbuff,lsn,4);//lsn복사
+	memset(lbnlsnbuff,(char)(0xFF),4);
+	sprintf(lbnlsnbuff,"%d",lsn);
 	for(int j=SECTOR_SIZE+4;j<SECTOR_SIZE+8;j++)
 	{
-		pagebufff[j]=lbnlsnbuff[j];
+		newpagebufff[j]=lbnlsnbuff[j-SECTOR_SIZE-4];
 	}
 	free(lbnlsnbuff);
 	////넣을 데이터 세팅 끝
@@ -169,12 +170,12 @@ void ftl_write(int lsn, char *sectorbuf)
 			}
 			else
 			{
-				memset(pagebufff,-1,PAGE_SIZE);
+				memset(pagebufff,(char)0xFF,PAGE_SIZE);
 			}
 			free(bufforlsn);
 		
 		}
-		memset(pagebufff,-1,PAGE_SIZE);
+		memset(pagebufff,(char)0xFF,PAGE_SIZE);
 		if(is_there_lsn_already==TRUE)//overwrite해줘야할 경우
 		{
 			for(int j=0;j<PAGES_PER_BLOCK;j++)
@@ -185,14 +186,15 @@ void ftl_write(int lsn, char *sectorbuf)
 					dd_write(spare*PAGES_PER_BLOCK+j,pagebufff);//기존 것을 옮겨줌.
 				}
 				
-				memset(pagebufff,-1,PAGE_SIZE);
+				memset(pagebufff,(char)0xFF,PAGE_SIZE);
 			}
-			memset(pagebufff,-1,PAGE_SIZE);
+			memset(pagebufff,(char)0xFF,PAGE_SIZE);
 			dd_write((spare*PAGES_PER_BLOCK)+index_to_overwrite,newpagebufff);
 			dd_erase(addmapt[lbnnow][1]);//기존것을 erase해줌.
 			int tempfornewfree=addmapt[lbnnow][1];
 			addmapt[lbnnow][1]=spare;//spare block을 lbn에 새로 할당해줌.
 			addmapt[BLOCKS_PER_DEVICE-1][1]=tempfornewfree;//기존 pbn을 freeblock으로
+			spare=addmapt[BLOCKS_PER_DEVICE-1][1];
 			
 		}
 		else//overwrite하지 않아도 되는 경우
@@ -207,10 +209,10 @@ void ftl_write(int lsn, char *sectorbuf)
 				}
 				else
 				{
-					memset(pagebufff,-1,PAGE_SIZE);
+					memset(pagebufff,(char)0xFF,PAGE_SIZE);
 				}
 			}
-			memset(pagebufff,-1,PAGE_SIZE);
+			memset(pagebufff,(char)0xFF,PAGE_SIZE);
 		}
 	
 	}
@@ -220,25 +222,38 @@ void ftl_write(int lsn, char *sectorbuf)
 		{
 			if(j!=spare)
 			{
-				addmapt[lbnnow][1]=j;//lbn에 새 pbn할당.
-				dd_write(addmapt[lbnnow][1]*PAGES_PER_BLOCK,newpagebufff);
-				j=BLOCKS_PER_DEVICE-1;
-				break;
+				int is_pbn_used=0;
+				for(int k=0;k<DATABLKS_PER_DEVICE;k++)
+				{
+					if(addmapt[k][1]==j)
+					{
+						is_pbn_used=1;
+					}
+				}
+				if(is_pbn_used==0)
+				{
+					addmapt[lbnnow][1]=j;//lbn에 새 pbn할당.
+				    dd_write(addmapt[lbnnow][1]*PAGES_PER_BLOCK,newpagebufff);
+				    j=BLOCKS_PER_DEVICE-1;
+				    break;
+				}
+				
 			}
 		}
 	}
 	free(pagebufff);
 	free(newpagebufff);
+	free(emptpage);
 	return;
 }
 
 void ftl_print()
 {
 	printf("LSN PBN\n");
-	for(int i=0;i<DATABLKS_PER_DEVICE-1;i++)
+	for(int i=0;i<DATABLKS_PER_DEVICE;i++)
 	{
 		printf("%d %d\n",addmapt[i][0],addmapt[i][1]);
 	}
-	printf("free block's pbn: %d",addmapt[BLOCKS_PER_DEVICE-1][1]);
+	printf("free block's pbn: %d\n",addmapt[BLOCKS_PER_DEVICE-1][1]);
 	return;
 }

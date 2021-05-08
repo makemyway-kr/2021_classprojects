@@ -8,53 +8,66 @@
 #include <assert.h>
 #include "blockmap.h"
 
-FILE *flashfp;
+FILE* flashfp;
+
+int write_cnt;
+int erase_cnt;
+
 
 /****************  prototypes ****************/
 void ftl_open();
-void ftl_write(int lsn, char *sectorbuf);
-void ftl_read(int lsn, char *sectorbuf);
+void ftl_write(int lsn, char* sectorbuf);
+void ftl_read(int lsn, char* sectorbuf);
+void ftl_print();
 
-//
-// 이 함수는 file system의 역할을 수행한다고 생각하면 되고,
-// file system이 flash memory로부터 512B씩 데이터를 저장하거나 데이터를 읽어 오기 위해서는
-// 각자 구현한 FTL의 ftl_write()와 ftl_read()를 호출하면 됨
-//
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-	char *blockbuf;
-    char sectorbuf[SECTOR_SIZE];
-	int lsn, i;
-	flashfp=fopen("flashmemory","r+b")!=NULL;
-	if(flashfp==NULL)//파일 존재하지 않음.
-	{
-		blockbuf = (char *)malloc(BLOCK_SIZE);
-	    memset(blockbuf, 0xFF, BLOCK_SIZE);
+   char* blockbuf;
+   int lsn, i;
 
-		for(int i = 0; i < BLOCKS_PER_DEVICE; i++)
-		{
-			fwrite(blockbuf, BLOCK_SIZE, 1, flashfp);
-		}
+   flashfp = fopen("flashmemory.txt", "w+b");
+   if (flashfp == NULL)
+   {
+      printf("file open error\n");
+      exit(1);
+	  blockbuf = (char*)malloc(BLOCK_SIZE);
+   	  memset(blockbuf, 0xFF, BLOCK_SIZE);
 
-		free(blockbuf);
-	}
-	/*flashfp= fopen("flashmemory", "w+b");
-	if(flashfp == NULL)
-	{
-		printf("file open error\n");
-		exit(1);
-	}
-	*/
-		
-	//
-	// flash memory의 모든 바이트를 '0xff'로 초기화한다.
-	// 
+   	  for (i = 0; i < BLOCKS_PER_DEVICE; i++)
+      {
+		fwrite(blockbuf, BLOCK_SIZE, 1, flashfp);
+      }
 
-	ftl_open();    // ftl_read(), ftl_write() 호출하기 전에 이 함수를 반드시 호출해야 함
-	//
-	// ftl_write() 및 ftl_read() 테스트 코드 작성
-	//
-	fclose(flashfp);	
-
-	return 0;
+   	  free(blockbuf);
+   }
+   fclose(flashfp);
+   flashfp=fopen("flashmemory.txt","rb");
+   ftl_open();    // ftl_read(), ftl_write() 호출하기 전에 이 함수를 반드시 호출해야 함
+   fclose(flashfp);
+   flashfp = fopen("flashmemory.txt", "w+b");
+   char *secbuf=malloc(SECTOR_SIZE);
+   memset(secbuf,0xFF,SECTOR_SIZE);
+   strcpy(secbuf,"dfadsfasdfdsf5555654asdfasdfasdfsadfasdfsdafsdafsdafsdfsadfasdfsdafsadfasdfasdfasdfsadfasdfasdfasdfsdaf5sda41f56sad4f65sda4f65sd4f6541sda65f1sd6352f1sd32f13sd54f16sd541f65sd41f63sd541f65sd41f65sda41f6541dsf6dsa65f46sad5f146sd5af1463s5ad1f46asd351f63sd5af416sad54f9sda874f9sd8a47f96asd584f16sda514f6sd5a14f65sd41f65asd14f65asd4f65asd4f65sd4f65asd4f65as4df65sda4f654sda6f54asd6f456sd54f6sda54fasd56f46ew54qr98q7wer9+84qwe6r5f4we6q54f651sdf3s2a1df32sda1f65asd4f6we4q968r749qwe8r749qewds5f41asd635f1sdafdsfasdfasdff");
+   ftl_write(0, secbuf);
+   memset(secbuf,0xFF,SECTOR_SIZE);
+   strcpy(secbuf,"dfadsfasdfdsf5555654asdfasdfasdfsadfasdfsdafsdafsdafsdfsadfasdfsdafsadfasdfasdfasdfsadfasdfasdfasdfsdaf5sda41f56sad4f65sda4f65sd4f6541sda65f1sd6352f1sd32f13sd54f16sd541f65sd41f63sd541f65sd41f65sda41f6541dsf6dsa65f46sad5f146sd5af1463s5ad1f46asd351f63sd5af416sad54f9sda874f9sd8a47f96asd584f16sda514f6sd5a14f65sd41f65asd14f65asd4f65asd4f65sd4f65asd4f65as4df65sda4f654sda6f54asd6f456sd54f6sda54fasd56f46ew54qr98q7wer9+84qwe6r5f4we6q54f651sdf3s2a1df32sda1f65asd4f6we4q968r749qwe8r749qewds5f41asd635f1sdafdsfasdfasdff");
+   ftl_write(1,secbuf);
+   memset(secbuf,0xFF,SECTOR_SIZE);
+   strcpy(secbuf,"dfadsfasdfdsf5555654asdfasdfasdfsadfasdfsdafsdafsdafsdfsadfasdfsdafsadfasdfasdfasdfsadfasdfasdfasdfsdaf5sda41f56sad4f65sda4f65sd4f6541sda65f1sd6352f1sd32f13sd54f16sd541f65sd41f63sd541f65sd41f65sda41f6541dsf6dsa65f46sad5f146sd5af1463s5ad1f46asd351f63sd5af416sad54f9sda874f9sd8a47f96asd584f16sda514f6sd5a14f65sd41f65asd14f65asd4f65asd4f65sd4f65asd4f65as4df65sda4f654sda6f54asd6f456sd54f6sda54fasd56f46ew54qr98q7wer9+84qwe6r5f4we6q54f651sdf3s2a1df32sda1f65asd4f6we4q968r749qwe8r749qewds5f41asd635f1sdafdsfasdfasdff");
+   ftl_write(1,secbuf);
+   memset(secbuf,0xFF,SECTOR_SIZE);
+   strcpy(secbuf,"dfadsfasdfdsf5555654asdfasdfasdfsadfasdfsdafsdafsdafsdfsadfasdfsdafsadfasdfasdfasdfsadfasdfasdfasdfsdaf5sda41f56sad4f65sda4f65sd4f6541sda65f1sd6352f1sd32f13sd54f16sd541f65sd41f63sd541f65sd41f65sda41f6541dsf6dsa65f46sad5f146sd5af1463s5ad1f46asd351f63sd5af416sad54f9sda874f9sd8a47f96asd584f16sda514f6sd5a14f65sd41f65asd14f65asd4f65asd4f65sd4f65asd4f65as4df65sda4f654sda6f54asd6f456sd54f6sda54fasd56f46ew54qr98q7wer9+84qwe6r5f4we6q54f651sdf3s2a1df32sda1f65asd4f6we4q968r749qwe8r749qewds5f41asd635f1sdafdsfasdfasdff");
+   ftl_write(14,secbuf);
+   memset(secbuf,0xFF,SECTOR_SIZE);
+   strcpy(secbuf,"dfadsfasdfdsf5555654asdfasdfasdfsadfasdfsdafsdafsdafsdfsadfasdfsdafsadfasdfasdfasdfsadfasdfasdfasdfsdaf5sda41f56sad4f65sda4f65sd4f6541sda65f1sd6352f1sd32f13sd54f16sd541f65sd41f63sd541f65sd41f65sda41f6541dsf6dsa65f46sad5f146sd5af1463s5ad1f46asd351f63sd5af416sad54f9sda874f9sd8a47f96asd584f16sda514f6sd5a14f65sd41f65asd14f65asd4f65asd4f65sd4f65asd4f65as4df65sda4f654sda6f54asd6f456sd54f6sda54fasd56f46ew54qr98q7wer9+84qwe6r5f4we6q54f651sdf3s2a1df32sda1f65asd4f6we4q968r749qwe8r749qewds5f41asd635f1sdafdsfasdfasdff");
+   ftl_write(55,secbuf);
+   int j;
+   fclose(flashfp);
+   memset(secbuf,0xFF,SECTOR_SIZE);
+   flashfp=fopen("flashmemory.txt","r+b");
+   ftl_read(1,secbuf);
+   printf("%s\n",secbuf);
+   ftl_print();
+   free(secbuf);
+   return 0;
 }

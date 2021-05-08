@@ -7,9 +7,10 @@ int main(int argc, char *argv[])
    
     char*buff;
     buff=malloc(4);
-    int a=512;
+    int a=12;
     sprintf(buff,"%d",a);
-    printf("%c",buff[2]);
+    printf("%d",atoi(buff));
     free(buff);
+   
     //free(buff);
 }
