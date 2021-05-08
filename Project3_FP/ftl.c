@@ -99,7 +99,7 @@ void ftl_read(int lsn, char *sectorbuf)
 		char*bufforlsn=malloc(4);
 		dd_read((addmapt[lbnnow][1]*PAGES_PER_BLOCK)+i,pagebufff);
 		int countforlsn=0;
-		for(int j=(512/sizeof(char))+4;j<(512/sizeof(char))+8;j++)//lsn복사
+		for(int j=(SECTOR_SIZE/sizeof(char))+4;j<(SECTOR_SIZE/sizeof(char))+8;j++)//lsn복사
 		{
 			bufforlsn[countforlsn]=pagebufff[j];//옮겨담음.
 			countforlsn++;
@@ -157,7 +157,7 @@ void ftl_write(int lsn, char *sectorbuf)
 			char*bufforlsn=malloc(4);
 			dd_read((addmapt[lbnnow][1]*PAGES_PER_BLOCK)+i,pagebufff);
 			int countforlsn=0;
-			for(int j=(512/sizeof(char))+4;j<(512/sizeof(char))+8;j++)//lsn복사
+			for(int j=(SECTOR_SIZE/sizeof(char))+4;j<(SECTOR_SIZE/sizeof(char))+8;j++)//lsn복사
 			{
 				bufforlsn[countforlsn]=pagebufff[j];
 				countforlsn++;
