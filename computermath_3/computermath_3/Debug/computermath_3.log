@@ -1,0 +1,8 @@
+﻿  inst.c
+C:\2021ssu\computermath_3\computermath_3\inst.c(10,3): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\2021ssu\computermath_3\computermath_3\inst.c(16,5): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\2021ssu\computermath_3\computermath_3\inst.c(23,3): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\2021ssu\computermath_3\computermath_3\inst.c(32,3): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\2021ssu\computermath_3\computermath_3\inst.c(38,5): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\2021ssu\computermath_3\computermath_3\inst.c(45,3): warning C4996: 'strcpy': This function or variable may be unsafe. Consider using strcpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+  computermath_3.vcxproj -> C:\2021ssu\computermath_3\Debug\computermath_3.exe
