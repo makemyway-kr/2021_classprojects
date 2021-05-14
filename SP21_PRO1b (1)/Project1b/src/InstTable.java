@@ -1,5 +1,5 @@
 import java.util.HashMap;
-
+import java.io.*;
 /**
  * 모든 instruction의 정보를 관리하는 클래스. instruction data들을 저장한다 또한 instruction 관련 연산,
  * 예를 들면 목록을 구축하는 함수, 관련 정보를 제공하는 함수 등을 제공 한다.
@@ -14,18 +14,31 @@ public class InstTable {
 	 * 클래스 초기화. 파싱을 동시에 처리한다.
 	 * 
 	 * @param instFile : instuction에 대한 명세가 저장된 파일 이름
+	 * @throws IOException 
 	 */
 
-	public InstTable(String instFile) {
+	public InstTable(String instFile) throws IOException {
 		instMap = new HashMap<String, Instruction>();
 		openFile(instFile);
 	}
 
 	/**
 	 * 입력받은 이름의 파일을 열고 해당 내용을 파싱하여 instMap에 저장한다.
+	 * @throws FileNotFoundException 
 	 */
-	public void openFile(String fileName) {
-		// ...
+	Instruction inst[]=new Instruction[256];//instruction객체 배열
+	public void openFile(String fileName) throws IOException {	
+		File file =new File(fileName);
+		FileReader ftor=new FileReader(file);
+		BufferedReader bufReader=new BufferedReader(ftor);
+		String line="";
+		int i=0;
+		while((line=bufReader.readLine())!=null) {
+			inst[i]=new Instruction(line);
+			line="";
+			i++;
+		}
+		
 	}
 
 	// get, set, search 등의 함수는 자유 구현
@@ -38,14 +51,11 @@ public class InstTable {
  */
 class Instruction {
 
-	/*
-	 * 각자의 inst.data 파일에 맞게 저장하는 변수를 선언한다.
-	 * 
-	 * ex) String instruction; int opcode; int numberOfOperand; String comment;
-	 */
-
-	/** instruction이 몇 바이트 명령어인지 저장. 이후 편의성을 위함 */
+	
+	String instruction;
+	int opcode;
 	int format;
+	int ops;
 
 	/**
 	 * 클래스를 선언하면서 일반문자열을 즉시 구조에 맞게 파싱한다.
@@ -62,7 +72,11 @@ class Instruction {
 	 * @param line : instruction 명세파일로부터 한줄씩 가져온 문자열
 	 */
 	public void parsing(String line) {
-		// TODO Auto-generated method stub
+		  String[]splitstring=line.split(" ");
+		  instruction=splitstring[0];
+		  opcode=Integer.parseInt(splitstring[1]);
+		  format=Integer.decode(splitstring[2]);
+		  ops=Integer.parseInt(splitstring[3]);
 	}
 
 	// 그 외 함수 자유 구현
