@@ -26,7 +26,7 @@ public class InstTable {
 	 * 입력받은 이름의 파일을 열고 해당 내용을 파싱하여 instMap에 저장한다.
 	 * @throws FileNotFoundException 
 	 */
-	Instruction inst[]=new Instruction[256];//instruction객체 배열
+	public Instruction inst[]=new Instruction[256];//instruction객체 배열
 	public void openFile(String fileName) throws IOException {	
 		File file =new File(fileName);
 		FileReader ftor=new FileReader(file);
@@ -35,9 +35,11 @@ public class InstTable {
 		int i=0;
 		while((line=bufReader.readLine())!=null) {
 			inst[i]=new Instruction(line);
+			instMap.put(inst[i].instruction,inst[i]);
 			line="";
 			i++;
 		}
+		bufReader.close();
 		
 	}
 
@@ -74,9 +76,9 @@ class Instruction {
 	public void parsing(String line) {
 		  String[]splitstring=line.split(" ");
 		  instruction=splitstring[0];
-		  opcode=Integer.parseInt(splitstring[1]);
-		  format=Integer.decode(splitstring[2]);
-		  ops=Integer.parseInt(splitstring[3]);
+		  format=Integer.parseInt(splitstring[1],10);
+		  opcode=Integer.parseInt(splitstring[2],16);
+		  ops=Integer.parseInt(splitstring[3],10);
 	}
 
 	// 그 외 함수 자유 구현

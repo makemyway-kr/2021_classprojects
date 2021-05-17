@@ -7,8 +7,13 @@ public class LabelTable {
 	ArrayList<String> label;
 	ArrayList<Integer> locationList;
 	// external 선언 및 처리방법을 구현한다.
-
-	/**
+	public LabelTable() {
+		label=new ArrayList<String>();
+		locationList=new ArrayList<Integer>();
+	}
+		/**
+	
+	
 	 * 새로운 symbol과 literal을 table에 추가한다.
 	 * 
 	 * @param label    : 새로 추가되는 symbol 혹은 literal의 lable
@@ -17,6 +22,8 @@ public class LabelTable {
 	 *                 modifylable()을 통해서 이루어져야 한다.
 	 */
 	public void putName(String label, int location) {
+		this.label.add(label);
+		this.locationList.add(location);
 
 	}
 
@@ -27,7 +34,7 @@ public class LabelTable {
 	 * @param newLocation : 새로 바꾸고자 하는 주소값
 	 */
 	public void modifyName(String lable, int newLocation) {
-
+		this.locationList.set(this.label.indexOf(lable),newLocation);
 	}
 
 	/**
@@ -37,8 +44,8 @@ public class LabelTable {
 	 * @return address: 가지고 있는 주소값. 해당 symbol, literal이 없을 경우 -1 리턴
 	 */
 	public int search(String label) {
-		int address = 0;
-		// ...
+		int address = -1;
+		address=this.locationList.get(this.label.indexOf(label));
 		return address;
 	}
 

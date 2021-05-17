@@ -1,5 +1,7 @@
 import java.util.ArrayList;
-
+import java.util.Arrays;
+import java.util.HashMap;
+import java.io.*;
 /**
  * 사용자가 작성한 프로그램 코드를 단어별로 분할 한 후, 의미를 분석하고, 최종 코드로 변환하는 과정을 총괄하는 클래스이다.
  * 
@@ -25,7 +27,8 @@ public class TokenTable {
 
 	/** 각 line을 의미별로 분할하고 분석하는 공간. */
 	ArrayList<Token> tokenList;
-
+	ArrayList<String>reference;//reference를 별도로 저장하고자함.
+	ArrayList<String>EXTDEF;
 	/**
 	 * 초기화하면서 symTable과 instTable을 링크시킨다.
 	 * 
@@ -34,7 +37,12 @@ public class TokenTable {
 	 * @param instTab   : instruction 명세가 정의된 instTable
 	 */
 	public TokenTable(LabelTable symTab, LabelTable literalTab, InstTable instTab) {
-		// ...
+		this.symTab=symTab;
+		this.literalTab=literalTab;
+		this.instTab=instTab;
+		tokenList=new ArrayList<Token>();
+		reference=new ArrayList<String>();
+		EXTDEF=new ArrayList<String>();
 	}
 
 	/**
@@ -63,7 +71,278 @@ public class TokenTable {
 	 * @param index
 	 */
 	public void makeObjectCode(int index) {
-		// ...
+		HashMap<String,String>registers=new HashMap<String,String>();
+		registers.put("A", "0");
+		registers.put("X", "1");
+		registers.put("S", "4");
+		registers.put("T", "5");
+		registers.put("", "0");
+		
+		
+		Token temperary=getToken(index);
+		if(temperary.operator.indexOf("+")!=-1) {
+			temperary.setFlag(TokenTable.eFlag, 1);
+		}
+		else
+		{
+			temperary.setFlag(TokenTable.eFlag, 0);
+		}
+		if(temperary.operand[0].indexOf("@")!=-1)
+		{
+			temperary.setFlag(TokenTable.nFlag, 1);
+		}
+		else
+		{
+			temperary.setFlag(TokenTable.nFlag, 0);
+		}
+		if(temperary.operand[0].indexOf("#")!=-1)
+		{
+			temperary.setFlag(TokenTable.iFlag, 1);
+			
+		}
+		else
+		{
+			temperary.setFlag(TokenTable.iFlag, 0);
+		}
+		if(temperary.operand[1].equals("X"))
+		{
+			temperary.setFlag(TokenTable.xFlag, 1);
+		}
+		else
+		{
+			temperary.setFlag(TokenTable.xFlag, 0);
+		}
+		if(temperary.getFlag(TokenTable.nFlag)==0 && temperary.getFlag(TokenTable.iFlag)==0)
+		{
+			temperary.setFlag(TokenTable.nFlag, 1);
+			temperary.setFlag(TokenTable.iFlag, 1);//simple addressing
+		}
+		int is_reference_=0;
+		for(int re=0;re<reference.size();re++)
+		{
+			if(temperary.operand[0].contains(reference.get(re))==true)//reference를 operand로 가지는 경우 p register 0
+			{
+				is_reference_=1;
+			}
+		}
+		if(is_reference_==0)
+		{
+			temperary.setFlag(TokenTable.pFlag, 1);
+		}
+		//objectcode
+		if(temperary.getFlag(TokenTable.nFlag)==1 && temperary.getFlag(TokenTable.iFlag)==1 )
+		{
+			temperary.objectCode+=(Integer.toHexString(instTab.instMap.get(temperary.operator).opcode+3));
+			
+		}
+		else if(temperary.getFlag(TokenTable.nFlag)==1)
+		{
+			temperary.objectCode+=(Integer.toHexString(instTab.instMap.get(temperary.operator).opcode+2));
+		}
+		else if(temperary.getFlag(TokenTable.iFlag)==1) 
+		{
+			temperary.objectCode+=(Integer.toHexString(instTab.instMap.get(temperary.operator).opcode+1));
+		}
+		int xbpe=0;
+		if(temperary.getFlag(TokenTable.xFlag)==1)
+		{
+			xbpe+=8;
+		}
+		if(temperary.getFlag(TokenTable.pFlag)==1)
+		{
+			xbpe+=2;
+		}
+		if(temperary.getFlag(TokenTable.eFlag)==1)
+		{
+			xbpe+=1;
+		}
+		temperary.objectCode+=Integer.toString(xbpe);
+		if(instTab.instMap.get(temperary.operator)!=null)
+		{
+			if(instTab.instMap.get(temperary.operator).format==1)
+			{
+				temperary.objectCode=Integer.toHexString(instTab.instMap.get(temperary.operator).opcode);
+			}
+			else if(instTab.instMap.get(temperary.operator).format==2)
+			{
+				temperary.objectCode=Integer.toHexString(instTab.instMap.get(temperary.operator).opcode)+registers.get(temperary.operand[0])+registers.get(temperary.operand[1]);
+			}
+			else if(instTab.instMap.get(temperary.operator).format==3)
+			{
+				if(temperary.operand[0].contains("="))
+				{
+					if(index<tokenList.size()-1)
+					{
+						Token cal=getToken(index+1);
+						String[] ttttl=temperary.operand[0].split("\'");
+						int temlit=literalTab.search(ttttl[1]);
+						int tempob=temlit-cal.location;
+						temperary.objectCode+=Integer.toHexString(tempob);
+					}
+					
+				}
+				else if(temperary.operand[0].contains("#"))
+				{
+					temperary.objectCode+=temperary.operand[0].substring(1);
+				}
+				else if(temperary.operand[0].contains("@"))
+				{
+					if(index<tokenList.size()-1)
+					{
+						Token cal=getToken(index+1);
+						int temlit=symTab.search(temperary.operand[0].substring(1));
+						int tempob=temlit-cal.location;
+						if(Integer.toHexString(tempob).length()<3)
+						{
+							if(Integer.toHexString(tempob).length()==1)
+							{
+								temperary.objectCode+=("00"+Integer.toHexString(tempob));
+							}
+							else if(Integer.toHexString(tempob).length()==2)
+							{
+								temperary.objectCode+=("0"+Integer.toHexString(tempob));
+							}
+							else if(Integer.toHexString(tempob).length()==0)
+							{
+								temperary.objectCode+="000";
+							}
+						}
+						else
+						{
+							temperary.objectCode+=Integer.toHexString(tempob);
+						}
+						
+					}
+					
+				}
+				else
+				{
+					int temlit=symTab.search(temperary.operand[0]);
+					if(temlit!=-1)
+					{
+						if(index<tokenList.size()-1)
+						{
+							Token cal=getToken(index+1);
+							if(temlit<cal.location)
+							{
+								int tem=cal.location-temlit-1;
+								tem=4095-tem;
+								temperary.objectCode+=Integer.toHexString(tem);
+							}
+							else
+							{
+								temperary.objectCode+=Integer.toHexString(temlit-cal.location);
+							}
+						}
+					}
+					else
+					{
+						temperary.objectCode+="000";
+					}
+					
+				}
+			
+					
+					
+			}
+			else
+			{
+				temperary.objectCode="";
+			}
+			
+		}
+		else if(temperary.operator.contains("+"))//4형식.
+		{
+			String temoper=temperary.operator.substring(1);
+			if(temperary.operand[0].contains("="))
+			{
+				if(index<tokenList.size()-1)
+				{
+					Token cal=getToken(index+1);
+					String[] ttttl=temperary.operand[0].split("\'");
+					int temlit=literalTab.search(ttttl[1]);
+					int tempob=temlit-cal.location;
+					temperary.objectCode+=Integer.toHexString(tempob);
+				}
+				
+			}
+			else if(temperary.operand[0].contains("#"))
+			{
+				temperary.objectCode+=temperary.operand[0].substring(1);
+			}
+			else if(temperary.operand[0].contains("@"))
+			{
+				if(index<tokenList.size()-1)
+				{
+					Token cal=getToken(index+1);
+					int temlit=symTab.search(temperary.operand[0].substring(1));
+					int tempob=temlit-cal.location;
+					if(Integer.toHexString(tempob).length()<5)
+					{
+						if(Integer.toHexString(tempob).length()==1)
+						{
+							temperary.objectCode+=("0000"+Integer.toHexString(tempob));
+						}
+						else if(Integer.toHexString(tempob).length()==2)
+						{
+							temperary.objectCode+=("000"+Integer.toHexString(tempob));
+						}
+						else if(Integer.toHexString(tempob).length()==0)
+						{
+							temperary.objectCode+="00000";
+						}
+						else if(Integer.toHexString(tempob).length()==3)
+						{
+							temperary.objectCode+=("00"+Integer.toHexString(tempob));
+						}
+						else if(Integer.toHexString(tempob).length()==4)
+						{
+							temperary.objectCode+=("0"+Integer.toHexString(tempob));
+						}
+					}
+					else
+					{
+						temperary.objectCode+=Integer.toHexString(tempob);
+					}
+					
+				}
+				
+			}
+			else
+			{
+				int temlit=symTab.search(temperary.operand[0]);
+				if(temlit!=-1)
+				{
+					if(index<tokenList.size()-1)
+					{
+						Token cal=getToken(index+1);
+						if(temlit<cal.location)
+						{
+							int tem=cal.location-temlit-1;
+							tem=4095-tem;
+							temperary.objectCode+=Integer.toHexString(tem);
+						}
+						else
+						{
+							temperary.objectCode+=Integer.toHexString(temlit-cal.location);
+						}
+					}
+				}
+				else
+				{
+					temperary.objectCode+="00000";
+				}
+				
+			}
+			
+			
+		}
+		else
+		{
+			temperary.objectCode="";
+		}
+		tokenList.set(index, temperary);
+	
 	}
 
 	/**
@@ -101,7 +380,15 @@ class Token {
 	 * @param line 문장단위로 저장된 프로그램 코드
 	 */
 	public Token(String line) {
-		// initialize ???
+		label="";
+		operator="";
+		operand=new String[3];
+		for(int i=0;i<3;i++) {
+			operand[i]="";
+		}
+		comment="";
+		nixbpe=0;
+		objectCode="";
 		parsing(line);
 	}
 
@@ -111,8 +398,50 @@ class Token {
 	 * @param line 문장단위로 저장된 프로그램 코드.
 	 */
 	public void parsing(String line) {
-
-	}
+		 String[]splitstring=line.split("\t");
+		 ArrayList<String>ss=new ArrayList<>(Arrays.asList(splitstring));
+		 char []tmp=line.toCharArray();
+		 if(line.indexOf("\t")==0) {//no label
+			 operator=splitstring[1];
+			 ss.remove(0);
+			 ss.remove(0);
+		 }
+		 else if(tmp[0]=='.') {//only comment
+			 comment=line;
+			 ss.remove(0);
+			 ss.clear();
+		 }
+		 else {
+			 label=splitstring[0];
+			 ss.remove(0);
+			 operator=splitstring[1];
+			 ss.remove(0);
+		 }
+		 if(ss.size()>0) {//operand또는 comment가 남아있으면
+			 if(ss.size()==2) {
+				 String temp=ss.remove(0);
+				 String[]splitoperands=temp.split(",");
+				 for(int i=0;i<splitoperands.length;i++) {
+					 operand[i]=splitoperands[i];
+				 }
+				 comment=ss.remove(0);
+			 }
+			 else if(ss.size()==1) {//comment또는 operand 둘중 하나만 남아있을때
+				 String temp=ss.remove(0);
+				 if(temp.indexOf(" ")!=-1) {//띄어쓰기 있으면 코멘트
+					 comment=temp;
+				 }
+				 else {
+					 String[]splitoperands=temp.split(",");
+					 for(int i=0;i<splitoperands.length;i++) {
+						 operand[i]=splitoperands[i];
+					 }
+				 }
+				 }
+			 }
+		
+		 }
+	
 
 	/**
 	 * n,i,x,b,p,e flag를 설정한다.
@@ -124,7 +453,7 @@ class Token {
 	 * @param value : 집어넣고자 하는 값. 1또는 0으로 선언한다.
 	 */
 	public void setFlag(int flag, int value) {
-		// ...
+		nixbpe+=(flag*value);
 	}
 
 	/**

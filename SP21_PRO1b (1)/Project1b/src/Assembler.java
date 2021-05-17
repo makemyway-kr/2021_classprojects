@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
+import java.io.*;
 /**
  * Assembler: 이 프로그램은 SIC/XE 머신을 위한 Assembler 프로그램의 메인루틴이다. 프로그램의 수행 작업은 다음과 같다.
  * 1) 처음 시작하면 Instruction 명세를 읽어들여서 assembler를 세팅한다.
@@ -30,7 +30,7 @@ import java.util.Map;
 
 public class Assembler {
 	/** instruction 명세를 저장한 공간 */
-	InstTable instTable;
+	public InstTable instTable;
 	/** 읽어들인 input 파일의 내용을 한 줄 씩 저장하는 공간. */
 	ArrayList<String> lineList;
 	/** 프로그램의 section별로 symbol table을 저장하는 공간 */
@@ -49,8 +49,10 @@ public class Assembler {
 	 * 클래스 초기화. instruction Table을 초기화와 동시에 세팅한다.
 	 * 
 	 * @param instFile : instruction 명세를 작성한 파일 이름.
+	 * @throws IOException 
 	 */
-	public Assembler(String instFile) {
+	public int sttadd;//스타팅주소값
+	public Assembler(String instFile) throws IOException {
 		instTable = new InstTable(instFile);
 		lineList = new ArrayList<String>();
 		symtabList = new ArrayList<LabelTable>();
@@ -61,16 +63,17 @@ public class Assembler {
 
 	/**
 	 * 어셈블러의 메인 루틴
+	 * @throws IOException 
 	 */
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		Assembler assembler = new Assembler("inst.data");
 		assembler.loadInputFile("input.txt");
 		assembler.pass1();
 
-		assembler.printSymbolTable("symtab_00000000");
-		assembler.printLiteralTable("literaltab_00000000");
+		assembler.printSymbolTable("symtab_20192698");
+		assembler.printLiteralTable("literaltab_20192698");
 		assembler.pass2();
-		assembler.printObjectCode("output_00000000");
+		assembler.printObjectCode("output_20192698");
 
 	}
 
@@ -78,9 +81,19 @@ public class Assembler {
 	 * inputFile을 읽어들여서 lineList에 저장한다.
 	 * 
 	 * @param inputFile : input 파일 이름.
+	 * @throws IOException 
 	 */
-	private void loadInputFile(String inputFile) {
-		// TODO Auto-generated method stub
+	private void loadInputFile(String inputFile) throws IOException {
+		File input=new File(inputFile);
+		FileReader finput=new FileReader(input);
+		BufferedReader bufReader=new BufferedReader(finput);
+		String line="";
+		int i=0;
+		while((line=bufReader.readLine())!=null) {
+			lineList.add(line);
+			line="";
+			i++;
+		}
 
 	}
 
@@ -96,27 +109,263 @@ public class Assembler {
 	 * @param inputFile : input 파일 이름.
 	 */
 	private void pass1() {
-		// TODO Auto-generated method stub
-
-	}
+		TokenTable[] tokens=new TokenTable[3];
+		LabelTable[] symbols=new LabelTable[3];
+		LabelTable[] literals=new LabelTable[3];
+		for(int i=0;i<3;i++) {
+			symbols[i]=new LabelTable();
+			literals[i]=new LabelTable();
+			tokens[i]=new TokenTable(symbols[i],literals[i],instTable);
+		}
+		int locctr=0;
+		int section_count=0;
+		sttadd=0;
+		int curr=0;
+		int is_there_literal_to_address=0;
+		String literal_to_add=new String();
+		int last_locctr=sttadd;
+		int movetonext=0;
+		for(int i=0;i<lineList.size();i++) 
+		{
+			tokens[section_count].putToken(lineList.get(i));
+			Token temp=tokens[section_count].getToken(curr);
+			temp.location=locctr;
+			if(i==0) {
+				sttadd=Integer.parseInt(temp.operand[0],16);
+				temp.location=locctr;
+				tokens[section_count].tokenList.set(curr, temp);
+			}
+			if(temp.operator!="") 
+			{
+				
+				if(temp.operator.equals("CSECT")) 
+				{
+					last_locctr=locctr;
+					locctr=0;//controlsection바뀌어서 초기화해줌.
+					temp.location=locctr;
+					tokens[section_count+1].tokenList.add(temp);
+					tokens[section_count].tokenList.remove(curr);
+					movetonext=1;
+					curr=0;
+					
+				}
+				else if(temp.operator.equals("EXTREF"))
+				{
+					for(int refs=0;refs<3;refs++)
+					{
+						if(!temp.operand[refs].equals(""))
+						{
+							tokens[section_count].reference.add(temp.operand[refs]);
+						}
+					}
+				}
+				else if(temp.operator.equals("EXTDEF"))
+				{
+					for(int defs=0;defs<3;defs++)
+					{
+						if(!temp.operand[defs].equals(""))
+						{
+							tokens[section_count].EXTDEF.add(temp.operand[defs]);
+						}
+					}
+				}
+				
+			
+			}
+			if(temp.operator=="" && temp.operand[0]==""&&temp.label==""&&temp.comment!="") 
+			{//comment만 존재하는것.
+				temp.location=locctr;
+				tokens[section_count].tokenList.set(curr, temp);
+			}
+			if(temp.label!="")
+			{
+				if(temp.operator.equals("EQU")) 
+				{
+					Token pretemp=tokens[section_count].getToken(curr-1);
+					if(pretemp.operator.equals("EQU"))
+					{
+						Token temp3=tokens[section_count].getToken(curr-2);
+						temp.location=Integer.parseInt(temp3.operand[0],10);
+						tokens[section_count].symTab.putName(temp.label,temp.location);
+						tokens[section_count].tokenList.set(curr, temp);
+					}
+					else {
+						tokens[section_count].symTab.putName(temp.label, temp.location);
+						tokens[section_count].tokenList.set(curr, temp);
+					}
+			
+		        }
+				else 
+				{
+					temp.location=locctr;
+					tokens[section_count].symTab.putName(temp.label,temp.location);
+					tokens[section_count].tokenList.set(curr, temp);
+				}
+				
+			}
+			if(temp.operator!="") {
+				Instruction inst=instTable.instMap.get(temp.operator);
+				if(temp.operator.indexOf("+")!=-1) {
+					locctr+=4;
+				}
+				
+				else if(inst!=null) {
+					if(inst.format==2) {
+						locctr+=2;
+					}
+					else if(inst.format==1) {
+						locctr+=1;
+					}
+					else {
+						locctr+=3;
+					}
+				}
+				else if(temp.operator.equals("WORD")) {
+					locctr+=3;
+				}
+				else if(temp.operator.equals("RESW")) {
+					locctr+=(3*(Integer.parseInt(temp.operand[0],10)));
+				}
+				else if(temp.operator.equals("RESB")) {
+					locctr+=Integer.parseInt(temp.operand[0],10);
+					
+				}
+				else if(temp.operator.equals("LTORG")) {
+					locctr+=3;
+					if(is_there_literal_to_address>=1)
+					{
+						tokens[section_count].literalTab.modifyName(literal_to_add, locctr-3);
+					}
+					literal_to_add="";
+					is_there_literal_to_address=0;
+				}
+				else if(temp.operator.equals("BYTE")) {
+					locctr+=1;
+				}
+			}
+			if(temp.operand[0].indexOf("=")==0) {//literal
+				String[] temporary;
+				temporary=temp.operand[0].split("\'");
+				if(tokens[section_count].literalTab.locationList.size()>0)
+				{
+					if(tokens[section_count].literalTab.search(temporary[1])==-1)
+					{
+						literal_to_add=temporary[1];
+						tokens[section_count].literalTab.putName(temporary[1],555 );//임시값
+						is_there_literal_to_address=1;
+						
+					}
+					
+				}
+				else {
+					literal_to_add=temporary[1];
+					tokens[section_count].literalTab.putName(temporary[1],555 );//임시값
+					is_there_literal_to_address=1;
+				}
+			}
+			if(movetonext==1|| temp.operator.equals("END")) 
+			{//지난섹션의 값 저장.
+				if(is_there_literal_to_address>=1) {
+					if(locctr==0) {
+						literals[section_count].modifyName(literal_to_add, last_locctr);
+						is_there_literal_to_address-=1;
+						literal_to_add="";
+					}
+					else {
+						literals[section_count].modifyName(literal_to_add,locctr);
+					}
+					
+				}
+				movetonext=0;
+				section_count+=1;
+				symtabList.add(tokens[section_count-1].symTab);
+				literaltabList.add(tokens[section_count-1].literalTab);
+				TokenList.add(tokens[section_count-1]);
+	        }
+			else {
+				tokens[section_count].tokenList.set(curr, temp);
+			}
+			curr++;//section내에서의 순서.
+		
+       }//for문끝
+	
+}
 
 	/**
 	 * 작성된 SymbolTable들을 출력형태에 맞게 출력한다.
 	 * 
 	 * @param fileName : 저장되는 파일 이름
+	 * @throws IOException 
 	 */
-	private void printSymbolTable(String fileName) {
-		// TODO Auto-generated method stub
-
+	private void printSymbolTable(String fileName) throws IOException {
+		if(fileName=="") {
+			for(int i=0;i<3;i++) {
+				TokenTable temp=TokenList.get(i);
+				LabelTable temperar=temp.symTab;
+				for(int j=0;j<temperar.label.size();j++) {
+					System.out.print(temperar.label.get(j));
+					System.out.print("\t");
+					String temmm=Integer.toHexString(temperar.search(temperar.label.get(j)));
+					System.out.println(temmm.toUpperCase());
+				}
+			}
+		}
+		else {
+			File symfile=new File(fileName);
+			FileWriter ftowr=new FileWriter(symfile);
+			BufferedWriter bw=new BufferedWriter(ftowr);
+			for(int i=0;i<3;i++) {
+				TokenTable temp=TokenList.get(i);
+				LabelTable temperar=temp.symTab;
+				for(int j=0;j<temperar.label.size();j++) {
+					bw.write(temperar.label.get(j));
+					bw.write("\t");
+					String temmm=Integer.toHexString(temperar.search(temperar.label.get(j)));
+					bw.write(temmm.toUpperCase());
+					bw.newLine();
+				}
+			}
+			bw.close();
+		}
 	}
 
 	/**
 	 * 작성된 LiteralTable들을 출력형태에 맞게 출력한다.
 	 * 
 	 * @param fileName : 저장되는 파일 이름
+	 * @throws IOException 
 	 */
-	private void printLiteralTable(String fileName) {
-		// TODO Auto-generated method stub
+	private void printLiteralTable(String fileName) throws IOException {
+		if(fileName=="") {
+			for(int i=0;i<3;i++) {
+				TokenTable temp=TokenList.get(i);
+				LabelTable temperar=temp.literalTab;
+				for(int j=0;j<temperar.label.size();j++) {
+					System.out.print(temperar.label.get(j));
+					System.out.print("\t");
+					String temmm=Integer.toHexString(temperar.search(temperar.label.get(j)));
+					System.out.println(temmm.toUpperCase());
+				}
+			}
+		}
+		else {
+			File litfile=new File(fileName);
+			FileWriter ftowr=new FileWriter(litfile);
+			BufferedWriter bw=new BufferedWriter(ftowr);
+			for(int i=0;i<3;i++) {
+				TokenTable temp=TokenList.get(i);
+				LabelTable temperar=temp.literalTab;
+				for(int j=0;j<temperar.label.size();j++) {
+					bw.write(temperar.label.get(j));
+					bw.write("\t");
+					String temmm=Integer.toHexString(temperar.search(temperar.label.get(j)));
+					bw.write(temmm.toUpperCase());
+					bw.newLine();
+				}
+			}
+			bw.close();
+		}
+		
 
 	}
 
@@ -126,7 +375,17 @@ public class Assembler {
 	 * 1) 분석된 내용을 바탕으로 object code를 생성하여 codeList에 저장.
 	 */
 	private void pass2() {
-		// TODO Auto-generated method stub
+		
+		for(int i=0;i<3;i++)//flag 설정
+		{
+			TokenTable temp=TokenList.get(i);
+			for(int j=0;j<temp.tokenList.size();j++)
+			{
+				temp.makeObjectCode(j);
+			}		
+				
+		}
+		
 
 	}
 
@@ -134,9 +393,47 @@ public class Assembler {
 	 * 작성된 codeList를 출력형태에 맞게 출력한다.
 	 * 
 	 * @param fileName : 저장되는 파일 이름
+	 * @throws IOException 
 	 */
-	private void printObjectCode(String fileName) {
-		// TODO Auto-generated method stub
+	private void printObjectCode(String fileName) throws IOException {
+		if(fileName.equals(""))
+		{
+			for(int i=0;i<3;i++)
+			{
+				TokenTable temp=TokenList.get(i);
+				for(int j=0;j<temp.tokenList.size();j++)
+				{
+					Token temperary=temp.getToken(j);
+					if(!temperary.objectCode.equals(""))
+					{
+						System.out.println(temperary.objectCode);
+					}
+				}
+					
+			}
+		}
+		else
+		{
+			File fw=new File(fileName);
+			FileWriter fr=new FileWriter(fw);
+			BufferedWriter bf=new BufferedWriter(fr);
+			for(int i=0;i<3;i++)
+			{
+				TokenTable temp=TokenList.get(i);
+				for(int j=0;j<temp.tokenList.size();j++)
+				{
+					Token temperary=temp.getToken(j);
+					if(!temperary.objectCode.equals(""))
+					{
+						bf.write(temperary.objectCode);
+						
+					}
+				}
+				bf.newLine();
+					
+			}
+			bf.close();
+		}
 
 	}
 
