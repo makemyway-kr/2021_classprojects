@@ -14,7 +14,7 @@ def always_yes(zcontext):
 
 
 def main(zcontext):
-    time.sleep(10)
+    time.sleep(30)#wait
     always_yes(zcontext)
 
 

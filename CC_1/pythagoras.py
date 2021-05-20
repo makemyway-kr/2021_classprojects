@@ -8,7 +8,7 @@ def pythagoras(zcontext, url):
         zsock.send_json(sum(n * n for n in numbers))
 
 def main(zcontext):
-    time.sleep(10)
+    time.sleep(30)  # wait
     pythagoras(zcontext)
 
 

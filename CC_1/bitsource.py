@@ -23,7 +23,7 @@ def bitsource(zcontext):
 
 
 def main(zcontext):
-    time.sleep(10)
+    time.sleep(30)  # wait
     bitsource(zcontext)
 
 

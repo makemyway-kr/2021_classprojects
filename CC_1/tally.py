@@ -14,7 +14,7 @@ def tally(zcontext):
         osock.send_json([decision, p, q])
 
 def main(zcontext):
-    time.sleep(10)
+    time.sleep(30)#wait
     tally(zcontext)
 
 
