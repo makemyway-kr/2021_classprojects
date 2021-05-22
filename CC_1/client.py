@@ -3,11 +3,12 @@ import zmq, random, time
 
 def client(zcontext):
     N = input()
-    time.sleep(30)#wait
+    print("Waiting....")
+    time.sleep(35)#wait
     csock = zcontext.socket(zmq.PUSH)  # socket for pushing to bitsource
     rsock = zcontext.Socket(zmq.PULL)  # socket for receiving from tally
-    csock.connect('tcp://127.0.0.1:6900')
-    rsock.connect('tcp://127.0.0.1:6840')
+    csock.connect('tcp://127.0.0.1:6900')  #put your url if needed  #url for client-bitsource connection
+    rsock.connect('tcp://127.0.0.1:6840') #put your url if needed  #url for tally-client connection
     print("write number of points to calculate:")
     csock.send_string(N)
     count = 0
@@ -25,4 +26,7 @@ def main(zcontext):
 
 
 if __name__ == '__main__':
+    print("running")
     main(zmq.Context())
+    time.sleep(15)
+    print("program finished")

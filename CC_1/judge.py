@@ -4,15 +4,17 @@ B = 32
 
 
 def judge(zcontext):
+    print("Waiting....")
+    time.sleep(30)  # wait until client is ready
     """Determine whether each input coordinate is inside the unit circle."""
     isock = zcontext.socket(zmq.SUB)
-    isock.connect('127.0.0.1:6700')  # bitsource
+    isock.connect('127.0.0.1:6700')  # bitsource #put your url if needed
     for prefix in b'01', b'10', b'11':
         isock.setsockopt(zmq.SUBSCRIBE, prefix)
     psock = zcontext.socket(zmq.REQ)
-    psock.connect('tcp://127.0.0.1:6709')  # pythagoras
+    psock.connect('tcp://127.0.0.1:6709')  # pythagoras #put your url if needed
     osock = zcontext.socket(zmq.PUSH)
-    osock.connect('tcp://127.0.0.1:6705') # tally
+    osock.connect('tcp://127.0.0.1:6705') # tally #put your url if needed
     unit = 2 ** (B * 2)
     while True:
         bits = isock.recv_string()
@@ -23,9 +25,11 @@ def judge(zcontext):
 
 
 def main(zcontext):
-    time.sleep(30)#wait
     judge(zcontext)
 
 
-if __name__ == '__name__':
+if __name__ == '__main__':
+    print("running")
     main(zmq.Context())
+    time.sleep(15)
+    print("program finished")
