@@ -106,6 +106,13 @@ void unpack(const char *recordbuf, Person *p)
 	}
 }
 
+///
+//first fit 을 이용하여 right size를 검사함.
+///
+void search_first(FILE *fp,int* page,int* record)//
+{
+	
+}
 //
 // 새로운 레코드를 저장하는 기능을 수행하며, 터미널로부터 입력받은 필드값들을 구조체에 저장한 후 아래 함수를 호출한다.
 //
@@ -121,6 +128,10 @@ void add(FILE *fp, const Person *p)
 	if(page==-1 && record==-1)
 	{
 		
+	}
+	else
+	{
+		search_first(fp,&page,&record);
 	}
 }
 
