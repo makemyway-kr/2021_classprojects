@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "person.h"
 //필요한 경우 헤더 파일과 함수를 추가할 수 있음
 
@@ -20,7 +21,8 @@
 //
 void readPage(FILE *fp, char *pagebuf, int pagenum)
 {
-
+	fseek(fp,16+(PAGE_SIZE*pagenum),SEEK_SET);
+	fread(pagebuf,PAGE_SIZE,1,fp);
 }
 
 //
@@ -29,7 +31,8 @@ void readPage(FILE *fp, char *pagebuf, int pagenum)
 //
 void writePage(FILE *fp, const char *pagebuf, int pagenum)
 {
-
+	fseek(fp,16+(PAGE_SIZE*pagenum),SEEK_SET);
+	fwrite(pagebuf,PAGE_SIZE,1,fp);
 }
 
 //
@@ -38,7 +41,49 @@ void writePage(FILE *fp, const char *pagebuf, int pagenum)
 // 
 void pack(char *recordbuf, const Person *p)
 {
-
+	int length=strlen(p->addr)+strlen(p->age)+strlen(p->email)+strlen(p->id)+strlen(p->name)+strlen(p->phone);
+	recordbuf=malloc(sizeof(char)*length+7);
+	int ind=0;
+	for(ind;ind<strlen(p->id);ind++)
+	{
+		recordbuf[ind]=p->id[ind];
+	}
+	recordbuf[ind]='#';
+	ind+=1;
+	for(int i=0;i<strlen(p->name);i++)
+	{
+		recordbuf[ind]=p->name[i];
+		ind++;
+	}
+	recordbuf[ind]='#';
+	ind+=1;
+	for(int i=0;i<strlen(p->age);i++)
+	{
+		recordbuf[ind]=p->age[i];
+		ind++;
+	}recordbuf[ind]='#';
+	ind+=1;
+	for(int i=0;i<strlen(p->addr);i++)
+	{
+		recordbuf[ind]=p->addr[i];
+		ind++;
+	}
+	recordbuf[ind]='#';
+	ind+=1;
+	for(int i=0;i<strlen(p->phone);i++)
+	{
+		recordbuf[ind]=p->phone[i];
+		ind++;
+	}
+	recordbuf[ind]='#';
+	ind+=1;
+	for(int i=0;i<strlen(p->email);i++)
+	{
+		recordbuf[ind]=p->email[i];
+		ind++;
+	}
+	recordbuf[ind]='#';
+	recordbuf[ind+1]='\0';
 }
 
 // 
@@ -46,7 +91,19 @@ void pack(char *recordbuf, const Person *p)
 //
 void unpack(const char *recordbuf, Person *p)
 {
-
+	char*temp=strtok(recordbuf,"#");
+	int i=0;
+	while(i<6)
+	{
+		if(i==0) strcpy(p->id,temp);
+		else if(i==1) strcpy(p->name,temp);
+		else if(i==2) strcpy(p->age,temp);
+		else if(i==3) strcpy(p->addr,temp);
+		else if(i==4) strcpy(p->phone,temp);
+		else if(i==5) strcpy(p->email,temp);
+		temp=strtok(NULL,"#");
+		i++;
+	}
 }
 
 //
@@ -54,7 +111,17 @@ void unpack(const char *recordbuf, Person *p)
 //
 void add(FILE *fp, const Person *p)
 {
-
+	fseek(fp,8,SEEK_SET);
+	char co1[4];
+	char co2[4];
+	fread(co1,4,1,fp);
+	fread(co2,4,1,fp);
+	int page=atoi(co1);
+	int record=atoi(co2);
+	if(page==-1 && record==-1)
+	{
+		
+	}
 }
 
 //
@@ -68,7 +135,15 @@ void delete(FILE *fp, const char *id)
 int main(int argc, char *argv[])
 {
 	FILE *fp;  // 레코드 파일의 파일 포인터
+	fp=fopen(argv[1],"a+");
+	if(strcmp(argv[0],"a")==0)
+	{
 
+	}
+	else if(strcmp(argv[0],"d")==0)
+	{
+
+	}
 
 	return 1;
 }
