@@ -91,15 +91,16 @@ void close_record(FILE*fp)
 			{
 				lengthofrecs+=lengths[curr];
 				curr+=1;
+				offset_left--;
 			}
 			char*pagebuff=malloc(sizeof(char)*(lengthofrecs+4+(8*numbers[pa])));
 			char*temp=numbers[pa]+'0';
 			strcat(pagebuff,temp);
 			for(int i=0;i<records_per_pages;i++)
 			{
-				temp=offsets[curr]+'0';
+				temp=offsets[curr-records_per_pages+i]+'0';
 				strcat(pagebuff,temp);
-				temp=lengths[curr]+'0';
+				temp=lengths[curr-records_per_pages+i]+'0';
 				strcat(pagebuff,temp);
 				curr++;
 			}
@@ -112,27 +113,28 @@ void close_record(FILE*fp)
 			}
 			writePage(fp,pagebuff,pa);
 		}
-		else//¼öÁ¤¿ä
+		else
 		{
 			int lengthofrecs=0;
-			for(int i=0;i<records_per_pages;i++)
+			for(int i=0;i<numbers[pa];i++)
 			{
 				lengthofrecs+=lengths[curr];
 				curr+=1;
+				offset_left--;
 			}
 			char*pagebuff=malloc(sizeof(char)*(lengthofrecs+4+(8*numbers[pa])));
 			char*temp=numbers[pa]+'0';
 			strcat(pagebuff,temp);
 			for(int i=0;i<records_per_pages;i++)
 			{
-				temp=offsets[curr]+'0';
+				temp=offsets[curr-numbers[pa]+i]+'0';
 				strcat(pagebuff,temp);
-				temp=lengths[curr]+'0';
+				temp=lengths[curr-numbers[pa]+i]+'0';
 				strcat(pagebuff,temp);
 				curr++;
 			}
 			free(temp);
-			for(int i=curr-records_per_pages;i<curr;i++)
+			for(int i=curr-numbers[pa];i<curr;i++)
 			{
 				char*recordbuff=malloc(sizeof(char)*lengths[i]);
 				pack(recordbuff,&ps[i]);
