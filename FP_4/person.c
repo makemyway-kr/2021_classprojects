@@ -5,7 +5,7 @@
 //필요한 경우 헤더 파일과 함수를 추가할 수 있음
 
 // 과제 설명서대로 구현하는 방식은 각자 다를 수 있지만 약간의 제약을 둡니다.
-// 레코드 파일이 페이지 단위로 저장 관리되기 때문에 사용자 프로그램에서 레코드 파일로부터 데이터를 읽고 쓸 때도
+// 레코드 파일이 페이지 단위로 4저장 관리되기 때문에 사용자 프로그램에서 레코드 파일로부터 데이터를 읽고 쓸 때도
 // 페이지 단위를 사용합니다. 따라서 아래의 두 함수가 필요합니다.
 // 1. readPage(): 주어진 페이지 번호의 페이지 데이터를 프로그램 상으로 읽어와서 pagebuf에 저장한다
 // 2. writePage(): 프로그램 상의 pagebuf의 데이터를 주어진 페이지 번호에 저장한다
@@ -40,18 +40,42 @@ void open_records(FILE*fp)
 	int curr=0;
 	for(int page=0;page<meta[0];page++)
 	{
+		char *pagebuff=malloc(sizeof(char)*PAGE_SIZE);
+		readPage(fp,pagebuff,page);
+		char *temp=malloc(sizeof(char)*4);
+		for(int j=0;j<4;j++)
+		{
+			temp[j]=pagebuff[j];
+		}
+		numbers[page]=atoi(temp);
 		if(offset_left>records_per_pages)
 		{
-			for(int i=0;i<records_per_pages;i++)
-			{
-				fread(numbers[page],sizeof(int),1,fp);
-				fread(offsets[curr],sizeof(int),1,fp);
+			for(int i=0;i<numbers[page];i++)
+			{		
+				memset(temp,0,4);
+				for(int j=0;j<4;j++)
+				{
+					temp[j]=pagebuff[(i*8)+j+4];
+				}
+				offsets[curr]=atoi(temp);
+				memset(temp,0,4);
+				for(int j=0;j<4;j++)
+				{
+					temp[j]=pagebuff[(i*8)+j+8];
+				}
 				fread(lengths[curr],sizeof(int),1,fp);
 				offset_left-=1;
 				curr++;
 			}
 			for(int i=0;i<numbers[page];i++)
 			{
+				for(int j=0;j<lengths[curr-records_per_pages+i];j++)
+				{
+					if(i==0)
+					{
+						records[curr-records_per_pages+i][j]=pagebuff[(records_per_pages*8)+4+j];
+					}
+				}
 				fread(records[curr-records_per_pages+i],lengths[curr-records_per_pages+i],1,fp);//레코드 저장
 				unpack(records[curr-records_per_pages+i],&ps[curr-records_per_pages+i]);
 			}
