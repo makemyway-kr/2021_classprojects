@@ -41,9 +41,10 @@ void open_records(FILE*fp)//헤더 입력받음.
 	numbers=malloc(sizeof(int)*100);
 	lengths=malloc(sizeof(int)*records_per_pages);
 	offsets=malloc(sizeof(int)*records_per_pages);
-	char*buff_to_get=malloc(sizeof(char)*100);
-	fread(buff_to_get,4,1,fp);
-	if(strlen(buff_to_get)>0)
+	fseek(fp,0,SEEK_END);
+	int size=ftell(fp);
+	fseek(fp,0,SEEK_SET);
+	if(size>0)
 	{
 		fseek(fp,0,SEEK_SET);
 		fread(&meta[0],sizeof(int),1,fp);
@@ -80,16 +81,16 @@ void open_records(FILE*fp)//헤더 입력받음.
 				}
 				else
 				{
-					char*recordbuff=malloc(sizeof(char)*lengths[strec]+6);
+					char*recordbuff=malloc(sizeof(char)*(lengths[strec]+6));
 					if(counter==0)
 					{
-						memcpy(recordbuff,pagebuff+HEADER_AREA_SIZE,sizeof(char)*lengths[strec]+6);
+						memcpy(recordbuff,pagebuff+HEADER_AREA_SIZE,sizeof(char)*(lengths[strec]+6));
 						unpack(recordbuff,&ps[strec]);
 						counter++;
 					}
 					else
 					{
-						memcpy(recordbuff,pagebuff+HEADER_AREA_SIZE+lengths[strec-1],sizeof(char)*lengths[strec]+6);
+						memcpy(recordbuff,pagebuff+HEADER_AREA_SIZE+lengths[strec-1],sizeof(char)*(lengths[strec]+6));
 						unpack(recordbuff,&ps[strec]);
 						counter++;
 					}
@@ -101,7 +102,6 @@ void open_records(FILE*fp)//헤더 입력받음.
 			free(pagebuff);
 		}
 	}
-	free(buff_to_get);
 }
 void close_record(FILE*fp)
 {
@@ -120,7 +120,7 @@ void close_record(FILE*fp)
 		int strec=rec;
 		for(rec;rec<(i*records_per_pages)+records_per_pages;rec++)
 		{
-			if(rec<=meta[1])
+			if(rec<meta[1])
 			{
 				memcpy(pagebuff+(counter*8)+4,&offsets[rec],sizeof(int));
 				memcpy(pagebuff+(counter*8)+8,&lengths[rec],sizeof(int));
@@ -132,18 +132,18 @@ void close_record(FILE*fp)
 		}
 		for(strec;strec<(i*records_per_pages)+records_per_pages;strec++)
 		{
-			if(strec<=meta[1])
+			if(strec<meta[1])
 			{
-				char*recbuff=malloc(sizeof(char)*lengths[strec]);
+				char*recbuff=malloc(sizeof(char)*(lengths[strec]+6));
 				pack(recbuff,&ps[strec]);
 				if(counter==0)
 				{
-					memcpy(pagebuff+HEADER_AREA_SIZE,recbuff,sizeof(char)*lengths[strec]);
+					memcpy(pagebuff+HEADER_AREA_SIZE,recbuff,sizeof(char)*(lengths[strec]+6));
 					counter++;
 				}
 				else
 				{
-					memcpy(pagebuff+HEADER_AREA_SIZE+lengths[strec-1],recbuff,sizeof(char)*lengths[strec]);
+					memcpy(pagebuff+HEADER_AREA_SIZE+lengths[strec-1]+6,recbuff,sizeof(char)*(lengths[strec]+6));
 					counter++;
 				}
 				free(recbuff);
@@ -230,7 +230,7 @@ void add(FILE *fp, const Person *p)
 		{
 			if(meta[1]%records_per_pages!=0)
 			{
-				numbers[meta[0]]+=1;
+				numbers[meta[0]-1]+=1;
 				lengths[meta[1]]=recordlen;
 				offsets[meta[1]]=meta[1];
 				strcpy(ps[meta[1]].id,p->id);
@@ -272,8 +272,8 @@ void delete(FILE *fp, const char *id)
 				meta[2]=reco/records_per_pages;
 				meta[3]=reco%records_per_pages;
 				ps[reco].id[0]='*';
-				ps[reco].id[1]=(char)(-1);
-				ps[reco].id[2]=(char)(-1);
+				ps[reco].id[1]=-1;
+				ps[reco].id[2]=-1;
 			}
 			else
 			{
@@ -293,23 +293,34 @@ int main(int argc, char *argv[])
 	//받은 매개변수를 unpack해서 tp에 넣어주어야함.
 	if(*argv[1]=='a')
 	{
-		Person *tp=malloc(sizeof(Person));
-		fp=fopen(argv[2],"a+b");
+		if((fp = fopen(argv[2], "rb")) == NULL)
+		{
+			fp = fopen(argv[2], "wb");
+		}
+		Person *tp=(Person*)malloc(sizeof(Person));
 		open_records(fp);
+		fclose(fp);
+		FILE *fp2=fopen(argv[2],"wb");
 		strcpy(tp->id,argv[3]);
 		strcpy(tp->name,argv[4]);
 		strcpy(tp->age,argv[5]);
 		strcpy(tp->addr,argv[6]);
 		strcpy(tp->phone,argv[7]);
 		strcpy(tp->email,argv[8]);
-		add(fp,tp);
+		add(fp2,tp);
+		close_record(fp2);
+		fclose(fp2);
 	}
 	else if(*argv[1]=='d')
 	{
-		fp=fopen(argv[2],"a+b");
+		fp=fopen(argv[2],"rb");
 		open_records(fp);
-		delete(fp,argv[3]);
+		fclose(fp);
+		FILE* fp2=fopen(argv[2],"wb");
+		delete(fp2,argv[3]);
+		close_record(fp2);
+		fclose(fp2);
 	}
-	close_record(fp);
+	
 	return 1;
 }
