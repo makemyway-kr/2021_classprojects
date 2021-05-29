@@ -113,6 +113,7 @@ void close_record(FILE*fp)
 	int rec=0;
 	for(int i=0;i<meta[0];i++)
 	{
+		int last_point=HEADER_AREA_SIZE;
 		char *pagebuff=malloc(sizeof(char)*PAGE_SIZE);
 		memset(pagebuff,(char)0xFF,sizeof(char)*PAGE_SIZE);
 		memcpy(pagebuff,&numbers[i],sizeof(int));
@@ -138,15 +139,21 @@ void close_record(FILE*fp)
 				pack(recbuff,&ps[strec]);
 				if(counter==0)
 				{
-					memcpy(pagebuff+HEADER_AREA_SIZE,recbuff,sizeof(char)*(lengths[strec]+6));
+					memcpy(pagebuff+last_point,recbuff,sizeof(char)*(lengths[strec]+6));
 					counter++;
+					last_point+=lengths[strec]+6;
 				}
 				else
 				{
-					memcpy(pagebuff+HEADER_AREA_SIZE+lengths[strec-1]+6,recbuff,sizeof(char)*(lengths[strec]+6));
+					memcpy(pagebuff+last_point,recbuff,sizeof(char)*(lengths[strec]+6));
+					last_point+=lengths[strec]+6;
 					counter++;
 				}
 				free(recbuff);
+			}
+			else
+			{
+				break;
 			}
 		}
 		writePage(fp,pagebuff,i);
@@ -197,7 +204,7 @@ void add(FILE *fp, const Person *p)
 	}
 	else//파일에 적어도 하나가 있는 경우
 	{
-		if(meta[2]!=-1)//삭제된 레코드가 없는 경우.
+		if(meta[2]!=-1)//삭제된 레코드가 있는경우
 		{
 			int stp=meta[2]; int str=meta[3]; int page=meta[2]; int record=meta[3];
 			search_first(recordlen,&stp,&str,&page,&record);
@@ -226,7 +233,7 @@ void add(FILE *fp, const Person *p)
 			}
 
 		}
-		if(originmeta2==-1 || append==1)
+		if(originmeta2==-1 || append==1)//삭제된 레코드가 없거나 새로운 레코드/페이지에 넣어줘야 하는 경우.
 		{
 			if(meta[1]%records_per_pages!=0)
 			{
@@ -291,35 +298,29 @@ int main(int argc, char *argv[])
 {
 	FILE *fp;	
 	//받은 매개변수를 unpack해서 tp에 넣어주어야함.
+	if((fp = fopen(argv[2], "rb+")) == NULL)
+	{
+		fp = fopen(argv[2], "wb+");
+	}
+	open_records(fp);
 	if(*argv[1]=='a')
 	{
-		if((fp = fopen(argv[2], "rb")) == NULL)
-		{
-			fp = fopen(argv[2], "wb");
-		}
-		Person *tp=(Person*)malloc(sizeof(Person));
-		open_records(fp);
-		fclose(fp);
-		FILE *fp2=fopen(argv[2],"wb");
+		Person *tp=(Person*)malloc(sizeof(Person));		
 		strcpy(tp->id,argv[3]);
 		strcpy(tp->name,argv[4]);
 		strcpy(tp->age,argv[5]);
 		strcpy(tp->addr,argv[6]);
 		strcpy(tp->phone,argv[7]);
 		strcpy(tp->email,argv[8]);
-		add(fp2,tp);
-		close_record(fp2);
-		fclose(fp2);
+		add(fp,tp);
+		close_record(fp);
+		fclose(fp);
 	}
 	else if(*argv[1]=='d')
 	{
-		fp=fopen(argv[2],"rb");
-		open_records(fp);
+		delete(fp,argv[3]);
+		close_record(fp);
 		fclose(fp);
-		FILE* fp2=fopen(argv[2],"wb");
-		delete(fp2,argv[3]);
-		close_record(fp2);
-		fclose(fp2);
 	}
 	
 	return 1;
