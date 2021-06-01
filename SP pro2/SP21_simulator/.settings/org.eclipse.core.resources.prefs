@@ -1,2 +1,8 @@
 eclipse.preferences.version=1
 encoding//src/SP20_simulator/InstLuncher.java=UTF-8
+encoding//src/sp21_simulator/InstLuncher.java=UTF-8
+encoding//src/sp21_simulator/ResourceManager.java=UTF-8
+encoding//src/sp21_simulator/SicLoader.java=UTF-8
+encoding//src/sp21_simulator/SicSimulator.java=UTF-8
+encoding//src/sp21_simulator/SymbolTable.java=UTF-8
+encoding//src/sp21_simulator/VisualSimulator.java=UTF-8

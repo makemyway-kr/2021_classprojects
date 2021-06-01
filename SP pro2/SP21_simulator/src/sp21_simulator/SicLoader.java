@@ -1,4 +1,4 @@
-package SP20_simulator;
+package sp21_simulator;
 
 import java.io.File;
 
