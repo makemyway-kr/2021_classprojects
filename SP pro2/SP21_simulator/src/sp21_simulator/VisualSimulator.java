@@ -55,5 +55,6 @@ public class VisualSimulator extends JFrame {
 		fr.setVisible(true);
 		fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		Container contentpane=fr.getContentPane();
+		
 	}
 }
