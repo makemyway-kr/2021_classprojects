@@ -36,12 +36,33 @@ public class SicLoader {
 	 * @param objectCode 읽어들인 파일
 	 * @throws IOException 
 	 */
+	int sttadd=0;
 	public void load(File objectCode) throws IOException {
 		FileReader finput=new FileReader(objectCode);
 		BufferedReader bufread=new BufferedReader(finput);
 		String line=new String();
+		int count=0;
 		while((line=bufread.readLine())!=null) {
-			
+			if(line.charAt(0)=='H')//Header
+			{
+				
+			}
+			else if(line.charAt(0)=='D')
+			{
+				
+			}
+			else if(line.charAt(0)=='R')
+			{
+				
+			}
+			else if(line.charAt(0)=='M')
+			{
+				
+			}
+			else if(line.charAt(0)=='T')
+			{
+				
+			}
 		}
 	};
 
