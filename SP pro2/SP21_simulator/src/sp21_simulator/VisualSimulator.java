@@ -1,6 +1,8 @@
 package sp21_simulator;
+import java.awt.*;
+import java.awt.event.ActionListener;
 
-import java.awt.EventQueue;
+import javax.swing.*;
 import java.io.File;
 
 /**
@@ -9,11 +11,14 @@ import java.io.File;
  * 
  * 실제적인 작업은 SicSimulator에서 수행하도록 구현한다.
  */
-public class VisualSimulator {
+
+@SuppressWarnings("serial")
+public class VisualSimulator extends JFrame {
 	ResourceManager resourceManager = new ResourceManager();
 	SicLoader sicLoader = new SicLoader(resourceManager);
 	SicSimulator sicSimulator = new SicSimulator(resourceManager);
-
+	static JFrame fr;
+	
 	/**
 	 * 프로그램 로드 명령을 전달한다.
 	 */
@@ -45,6 +50,10 @@ public class VisualSimulator {
 	};
 
 	public static void main(String[] args) {
-
+		fr=new JFrame("SP21 pro2 20192698");
+		fr.setSize(700,300);
+		fr.setVisible(true);
+		fr.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		Container contentpane=fr.getContentPane();
 	}
 }

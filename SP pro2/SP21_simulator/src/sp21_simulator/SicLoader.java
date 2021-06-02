@@ -1,6 +1,10 @@
 package sp21_simulator;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 
 /**
  * SicLoader는 프로그램을 해석해서 메모리에 올리는 역할을 수행한다. 이 과정에서 linker의 역할 또한 수행한다.
@@ -30,9 +34,15 @@ public class SicLoader {
 	 * 한다. load과정에서 만들어진 symbol table 등 자료구조 역시 resourceManager에 전달한다.
 	 * 
 	 * @param objectCode 읽어들인 파일
+	 * @throws IOException 
 	 */
-	public void load(File objectCode) {
-
+	public void load(File objectCode) throws IOException {
+		FileReader finput=new FileReader(objectCode);
+		BufferedReader bufread=new BufferedReader(finput);
+		String line=new String();
+		while((line=bufread.readLine())!=null) {
+			
+		}
 	};
 
 }
