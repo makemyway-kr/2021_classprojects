@@ -1,6 +1,10 @@
 package sp21_simulator;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -28,8 +32,8 @@ public class ResourceManager {
 	 * 이것도 복잡하면 알아서 구현해서 사용해도 괜찮습니다.
 	 */
 	HashMap<String, Object> deviceManager = new HashMap<String, Object>();
-	char[] memory = new char[65536]; // String으로 수정해서 사용하여도 무방함.
-	int[] register = new int[10];
+	char[] memory; // String으로 수정해서 사용하여도 무방함.
+	int[] register;
 	double register_F;
 
 	SymbolTable symtabList;
@@ -39,7 +43,8 @@ public class ResourceManager {
 	 * 메모리, 레지스터등 가상 리소스들을 초기화한다.
 	 */
 	public void initializeResource() {
-
+		memory= new char[65536];
+		register = new int[10];
 	}
 
 	/**
@@ -57,7 +62,18 @@ public class ResourceManager {
 	 * @param devName 확인하고자 하는 디바이스의 번호,또는 이름
 	 */
 	public void testDevice(String devName) {
-
+		File f=new File(devName);
+		try {
+			FileReader fr=new FileReader(f);
+			if(f.exists())
+			{
+				deviceManager.put(devName, fr);
+			}
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 
 	/**
@@ -66,9 +82,13 @@ public class ResourceManager {
 	 * @param devName 디바이스의 이름
 	 * @param num     가져오는 글자의 개수
 	 * @return 가져온 데이터
+	 * @throws IOException 
 	 */
-	public char[] readDevice(String devName, int num) {
-		return null;
+	public char[] readDevice(String devName, int num) throws IOException {
+		FileReader tempf=(FileReader)deviceManager.get(devName);
+		char[]temp=new char[num];
+		tempf.read(temp,0,num);
+		return temp;
 
 	}
 
