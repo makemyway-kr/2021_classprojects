@@ -90,7 +90,7 @@ public class ResourceManager {
 	 * @param num      데이터 개수
 	 * @return 가져오는 데이터
 	 */
-	public char[] getMemory(int location, int num) {
+	public char[] getMemory(float location, int num) {
 		return null;
 
 	}
@@ -104,6 +104,9 @@ public class ResourceManager {
 	 */
 	public void setMemory(int locate, char[] data, int num) {
 
+	}
+	public void setMemory(float locate,char[]data,int num) {
+		
 	}
 
 	/**

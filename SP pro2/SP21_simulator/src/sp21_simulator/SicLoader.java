@@ -41,27 +41,61 @@ public class SicLoader {
 		FileReader finput=new FileReader(objectCode);
 		BufferedReader bufread=new BufferedReader(finput);
 		String line=new String();
-		int count=0;
+		int sttadd=0;//starting address of program
+		int length=0;
+		int locctr=sttadd;
 		while((line=bufread.readLine())!=null) {
+			if(line.charAt(0)=='D')
+			{
+				for(int i=1;i<line.length();i+=12)
+				{
+					rMgr.symtabList.putSymbol(line.substring(i,i+6), Integer.parseInt(line.substring(i+6,i+12),16));
+				}
+			}
+		}
+		bufread.close();
+		finput.close();
+		FileReader finput2=new FileReader(objectCode);
+		BufferedReader bufread2=new BufferedReader(finput2);
+		while((line=bufread2.readLine())!=null) {
 			if(line.charAt(0)=='H')//Header
 			{
-				
-			}
-			else if(line.charAt(0)=='D')
-			{
-				
-			}
-			else if(line.charAt(0)=='R')
-			{
-				
+				if(locctr==0)
+				{
+					sttadd=Integer.parseInt(line.substring(7,13),16);
+					length=Integer.parseInt(line.substring(13),16);
+					locctr=sttadd;
+				}
 			}
 			else if(line.charAt(0)=='M')
 			{
-				
+				float fixadd=(float)Integer.parseInt(line.substring(1,7),16);
+				int numf=Integer.parseInt(line.substring(7,9));
+				if(numf%2==1)//홀수일경우 0.5더해주어야함 주소값
+				{
+					fixadd+=0.5;
+				}
+				if(line.charAt(9)=='+')
+				{
+					int temperary=0;
+					temperary=Integer.parseInt(String.valueOf(rMgr.getMemory(fixadd, numf)),16);
+					String refsym=new String();
+					refsym=line.substring(10);
+					int toadd=rMgr.symtabList.search(refsym);
+					temperary+=toadd;
+					rMgr.setMemory(fixadd,Integer.toHexString(temperary).toCharArray(), numf);
+				}
+				else
+				{
+					
+				}
 			}
 			else if(line.charAt(0)=='T')
 			{
-				
+				int lenofline=0;
+				lenofline=Integer.parseInt(line.substring(7,9),16);
+				rMgr.setMemory(locctr, line.substring(9).toCharArray(), lenofline);
+				locctr+=lenofline;
 			}
 		}
 	};
