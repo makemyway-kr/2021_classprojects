@@ -4,8 +4,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -63,15 +65,9 @@ public class ResourceManager {
 	 */
 	public void testDevice(String devName) {
 		File f=new File(devName);
-		try {
-			FileReader fr=new FileReader(f);
-			if(f.exists())
-			{
-				deviceManager.put(devName, fr);
-			}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		if(f.exists())
+		{
+			deviceManager.put(devName, f);
 		}
 		
 	}
@@ -85,11 +81,10 @@ public class ResourceManager {
 	 * @throws IOException 
 	 */
 	public char[] readDevice(String devName, int num) throws IOException {
-		FileReader tempf=(FileReader)deviceManager.get(devName);
+		FileReader tempf=new FileReader((File)deviceManager.get(devName));
 		char[]temp=new char[num];
 		tempf.read(temp,0,num);
 		return temp;
-
 	}
 
 	/**
@@ -98,9 +93,14 @@ public class ResourceManager {
 	 * @param devName 디바이스의 이름
 	 * @param data    보내는 데이터
 	 * @param num     보내는 글자의 개수
+	 * @throws IOException 
 	 */
-	public void writeDevice(String devName, char[] data, int num) {
-
+	public void writeDevice(String devName, char[] data, int num) throws IOException {
+		FileWriter fo=new FileWriter((File)deviceManager.get(devName));
+		for(int i=0;i<num;i++)
+		{
+			fo.write(data[i]);
+		}
 	}
 
 	/**
@@ -111,7 +111,10 @@ public class ResourceManager {
 	 * @return 가져오는 데이터
 	 */
 	public char[] getMemory(float location, int num) {
-		return null;
+		int loc=(int)location*2;
+		char[]retch=new char[num];
+		retch=Arrays.copyOfRange(memory, loc, loc+num);
+		return retch;
 
 	}
 
@@ -123,10 +126,19 @@ public class ResourceManager {
 	 * @param num    저장하는 데이터의 개수
 	 */
 	public void setMemory(int locate, char[] data, int num) {
+		int loc=locate*2;
+		for(int i=loc;i<loc+num;i++)
+		{
+			memory[i]=data[i-loc];
+		}
 
 	}
 	public void setMemory(float locate,char[]data,int num) {
-		
+		int loc=(int)locate*2;
+		for(int i=loc;i<loc+num;i++)
+		{
+			memory[i]=data[i-loc];
+		}
 	}
 
 	/**
@@ -136,7 +148,7 @@ public class ResourceManager {
 	 * @return 레지스터가 소지한 값
 	 */
 	public int getRegister(int regNum) {
-		return 0;
+		return register[regNum];
 
 	}
 
@@ -147,7 +159,7 @@ public class ResourceManager {
 	 * @param value  레지스터에 집어넣는 값
 	 */
 	public void setRegister(int regNum, int value) {
-
+		register[regNum]=value;
 	}
 
 	/**
@@ -157,7 +169,8 @@ public class ResourceManager {
 	 * @return
 	 */
 	public char[] intToChar(int data) {
-		return null;
+		char[]temp=Integer.toHexString(data).toCharArray();
+		return temp;
 	}
 
 	/**
@@ -166,7 +179,8 @@ public class ResourceManager {
 	 * @param data
 	 * @return
 	 */
-	public int byteToInt(byte[] data) {
-		return 0;
+	public int byteToInt(char[] data) {
+		String temp=String.valueOf(data);
+		return Integer.parseInt(temp,16);
 	}
 }
