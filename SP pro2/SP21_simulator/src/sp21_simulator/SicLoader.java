@@ -60,11 +60,17 @@ public class SicLoader {
 		while((line=bufread2.readLine())!=null) {
 			if(line.charAt(0)=='H')//Header
 			{
-				if(locctr==0)
+				if(locctr==0)//첫 프로그램의 경우
 				{
 					sttadd=Integer.parseInt(line.substring(7,13),16);
+					rMgr.sttadd=sttadd;
 					length=Integer.parseInt(line.substring(13),16);
+					rMgr.symtabList.putSymbol(line.substring(1,7), locctr);
 					locctr=sttadd;
+				}
+				else
+				{
+					rMgr.symtabList.putSymbol(line.substring(1,7), locctr);
 				}
 			}
 			else if(line.charAt(0)=='M')

@@ -33,11 +33,11 @@ public class ResourceManager {
 	 * 
 	 * 이것도 복잡하면 알아서 구현해서 사용해도 괜찮습니다.
 	 */
-	HashMap<String, Object> deviceManager = new HashMap<String, Object>();
+	HashMap<String, Integer> deviceManager = new HashMap<String,Integer>();
 	char[] memory; // String으로 수정해서 사용하여도 무방함.
 	int[] register;
 	double register_F;
-
+	int sttadd;
 	SymbolTable symtabList;
 	// 이외에도 필요한 변수 선언해서 사용할 것.
 
@@ -52,9 +52,11 @@ public class ResourceManager {
 	/**
 	 * deviceManager가 관리하고 있는 파일 입출력 stream들을 전부 종료시키는 역할. 프로그램을 종료하거나 연결을 끊을 때
 	 * 호출한다.
+	 * @throws IOException 
 	 */
-	public void closeDevice() {
-
+	public void closeDevice() throws IOException {
+		reader.close();
+		writer.close();
 	}
 
 	/**
@@ -63,13 +65,24 @@ public class ResourceManager {
 	 * 
 	 * @param devName 확인하고자 하는 디바이스의 번호,또는 이름
 	 */
-	public void testDevice(String devName) {
-		File f=new File(devName);
-		if(f.exists())
+	
+	@SuppressWarnings("resource")
+	public int testDevice(String devName) throws IOException {
+		FileReader ft=new FileReader (devName);
+		if(ft.ready())
 		{
-			deviceManager.put(devName, f);
+			if(deviceManager.get(devName)==null)
+			{
+				deviceManager.put(devName, 0);
+				return 1;
+			}
 		}
-		
+		else
+		{
+			return 0;
+		}
+		ft.close();
+		return 1;
 	}
 
 	/**
@@ -80,10 +93,15 @@ public class ResourceManager {
 	 * @return 가져온 데이터
 	 * @throws IOException 
 	 */
+	FileReader reader;
 	public char[] readDevice(String devName, int num) throws IOException {
-		FileReader tempf=new FileReader((File)deviceManager.get(devName));
+		if(deviceManager.get(devName)==0)
+		{
+			deviceManager.replace(devName, 1);
+			reader=new FileReader(devName);
+		}
 		char[]temp=new char[num];
-		tempf.read(temp,0,num);
+		reader.read(temp,0,num);
 		return temp;
 	}
 
@@ -95,11 +113,16 @@ public class ResourceManager {
 	 * @param num     보내는 글자의 개수
 	 * @throws IOException 
 	 */
+	FileWriter writer;
 	public void writeDevice(String devName, char[] data, int num) throws IOException {
-		FileWriter fo=new FileWriter((File)deviceManager.get(devName));
+		if(deviceManager.get(devName)==0)
+		{
+			deviceManager.replace(devName, 1);
+			writer=new FileWriter(devName);
+		}
 		for(int i=0;i<num;i++)
 		{
-			fo.write(data[i]);
+			writer.write(data[i]);
 		}
 	}
 
@@ -160,6 +183,9 @@ public class ResourceManager {
 	 */
 	public void setRegister(int regNum, int value) {
 		register[regNum]=value;
+	}
+	public void setRegister(int regNum,char[]value) {
+		register[regNum]=(int)value[0];
 	}
 
 	/**
