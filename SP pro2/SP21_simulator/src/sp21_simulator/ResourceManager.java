@@ -37,6 +37,7 @@ public class ResourceManager {
 	char[] memory; // String으로 수정해서 사용하여도 무방함.
 	int[] register;
 	double register_F;
+	int proglength=0;
 	int sttadd;
 	SymbolTable symtabList;
 	// 이외에도 필요한 변수 선언해서 사용할 것.

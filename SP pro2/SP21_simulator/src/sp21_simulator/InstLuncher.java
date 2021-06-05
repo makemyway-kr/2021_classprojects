@@ -223,44 +223,114 @@ public class InstLuncher {
     	rMgr.setMemory(add, temp, 1);
     	rMgr.setRegister(8, curr+temi.format());
     }
-    public void TD(int curr,char[]instruction)
+    public int TD(int curr,char[]instruction) throws IOException
     {
-    	
-    }
-    public void TIX(int curr,char[]instruction)
-    {
-    	
+    	Instruction temi=new Instruction(instruction);
+    	int []flags=new int[6];
+    	flags=temi.getflag();
+    	int add=temi.addr(curr,flags);
+    	char[]temp=new char[2];
+    	rMgr.getMemory(add, 2);
+    	int res=rMgr.testDevice(String.valueOf(temp));
+    	rMgr.setRegister(8, curr+temi.format());
+    	return res;
     }
     public void TIXR(char[]instruction)
     {
-    	
+    	Instruction temi=new Instruction(instruction);
+    	int []regs=temi.registers();
+    	rMgr.setRegister(1, rMgr.getRegister(1)+1);
+    	int x=rMgr.getRegister(1);
+    	if(x<rMgr.getRegister(regs[0]))
+    	{
+    		rMgr.setRegister(2,-1);
+    	}
+    	else if(x==rMgr.getRegister(regs[0]))
+    	{
+    		rMgr.setRegister(2, 0);
+    	}
+    	else
+    	{
+    		rMgr.setRegister(2, 1);
+    	}
     }
-    public void WD(int curr,char[]instruction)
+    public void WD(int curr,char[]instruction) throws IOException
     {
-    	
+    	Instruction temi=new Instruction(instruction);
+    	int []flags=new int[6];
+    	flags=temi.getflag();
+    	int add=temi.addr(curr,flags);
+    	String devname=String.valueOf(rMgr.getMemory(add,2));
+    	char[]temp=new char[1];
+    	temp[0]=(char) rMgr.getRegister(0);
+    	rMgr.writeDevice(devname,temp, 1);
     }
         
     
     }
 class Instruction{
 	char[]instruction;
+	int format=0;
 	Instruction(char[]instruction){
 		this.instruction=instruction.clone();
 	}
 	int[] getflag(){
 		int []flags=new int[6];
+		format=3;
+		for(int i=0;i<6;i++)
+		{
+			flags[i]=0;
+		}
+		if((this.instruction[1]&2)==2)//n
+		{
+			flags[0]=1;
+		}
+		if((this.instruction[1]&1)==1)//i
+		{
+			flags[1]=1;
+		}
+		if((this.instruction[2]&8)==8)//x
+		{
+			flags[2]=1;
+		}
+		if((this.instruction[2]&4)==4)//b
+		{
+			flags[3]=1;
+		}
+		if((this.instruction[2]&2)==2)//p
+		{
+			flags[4]=1;
+		}
+		if((this.instruction[2]&1)==1)//e
+		{
+			flags[5]=1;
+			format=4;
+		}
 		return flags;
 	}
 	int addr(int curr,int[] flags) {
-		return 0;
+		int returningadd=0;
+		if(flags[4]==1)//pc relative
+		{
+			curr+=format;
+			String temp=this.instruction.toString();
+			returningadd=Integer.parseInt(temp.substring(3));
+		}
+		else
+		{
+			
+		}
+		return returningadd;
 	}
 	int [] registers() {
 		int []temp=new int[2];
+		temp[0]=Character.getNumericValue(instruction[2]);
+		temp[1]=Character.getNumericValue(instruction[3]);
+		format=2;
 		return temp;
 	}
 	int format()
 	{
-		int format=0;
 		return format;
 	}
 }
