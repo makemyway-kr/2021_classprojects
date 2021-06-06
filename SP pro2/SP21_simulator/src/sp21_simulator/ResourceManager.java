@@ -136,8 +136,8 @@ public class ResourceManager {
 	 */
 	public char[] getMemory(float location, int num) {
 		int loc=(int)location*2;
-		char[]retch=new char[num];
-		retch=Arrays.copyOfRange(memory, loc, loc+num);
+		char[]retch=new char[num*2];
+		retch=Arrays.copyOfRange(memory, loc, loc+(num*2));
 		return retch;
 
 	}
@@ -151,7 +151,7 @@ public class ResourceManager {
 	 */
 	public void setMemory(int locate, char[] data, int num) {
 		int loc=locate*2;
-		for(int i=loc;i<loc+num;i++)
+		for(int i=loc;i<loc+(num*2);i++)
 		{
 			memory[i]=data[i-loc];
 		}
@@ -159,7 +159,7 @@ public class ResourceManager {
 	}
 	public void setMemory(float locate,char[]data,int num) {
 		int loc=(int)locate*2;
-		for(int i=loc;i<loc+num;i++)
+		for(int i=loc;i<loc+(num*2);i++)
 		{
 			memory[i]=data[i-loc];
 		}

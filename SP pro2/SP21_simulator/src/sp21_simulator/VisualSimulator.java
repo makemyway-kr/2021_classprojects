@@ -4,6 +4,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 
 /**
  * VisualSimulator는 사용자와의 상호작용을 담당한다. 즉, 버튼 클릭등의 이벤트를 전달하고 그에 따른 결과값을 화면에 업데이트
@@ -21,8 +22,9 @@ public class VisualSimulator extends JFrame {
 	
 	/**
 	 * 프로그램 로드 명령을 전달한다.
+	 * @throws IOException 
 	 */
-	public void load(File program) {
+	public void load(File program) throws IOException {
 		// ...
 		sicLoader.load(program);
 		sicSimulator.load(program);

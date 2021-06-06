@@ -69,6 +69,7 @@ public class SicLoader {
 			{
 				if(count==0)//첫 프로그램의 경우
 				{
+					
 					length=Integer.parseInt(line.substring(13),16);
 					sttadd=Integer.parseInt(line.substring(7,13),16);
 					rMgr.sttadd=sttadd;
@@ -120,6 +121,9 @@ public class SicLoader {
 				rMgr.setMemory(stad, line.substring(9).toCharArray(), lenofline);
 			}
 		}
+		rMgr.proglength+=length;
+		rMgr.setRegister(2,rMgr.proglength);
+		
 	};
 
 }
