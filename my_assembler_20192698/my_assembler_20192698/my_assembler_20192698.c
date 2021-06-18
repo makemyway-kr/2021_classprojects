@@ -51,7 +51,7 @@ int main(int args, char* arg[])
         return -1;
     }
 
-    make_objectcode_output("output_20192698");
+    make_objectcode_output("");
     
     return 0;
 
@@ -540,32 +540,43 @@ static int assem_pass1(void)
             {
                 temp[fk] = '0';
             }
-            for (int kli = 0; cstr <= 1; kli++)
-            {
-                if (token_table[i]->operand[0][kli] == '\'' && cstr == 0)
-                {
-                    frs = kli;
-                    cstr++;
-                }
-                else if (token_table[i]->operand[0][kli] == '\'' && cstr == 1)
-                {
-                    ts = kli;
-                    cstr++;
-                }
-            }
-            for (int jlm = frs + 1; jlm < ts; jlm++)
-            {
-                temp[jlm - frs - 1] = token_table[i]->operand[0][jlm];
-            }
-            temp[ts - frs - 1] = '\0';
             int errlit = 0;
-            for (int litin = 0; litin < litcount; litin++)
+            if (token_table[i]->operand[0][1] == '3')
             {
-                if (strcmp(literal_table[litin].literal, temp) == 0)
+                temp[0] = '3';
+                temp[1] = '\0';
+                token_table[i]->addr = 36;
+            }
+            else
+            {
+                for (int kli = 0; cstr <= 1; kli++)
                 {
-                    errlit = -1;
+                    if (token_table[i]->operand[0][kli] == '\'' && cstr == 0)
+                    {
+                        frs = kli;
+                        cstr++;
+                    }
+                    else if (token_table[i]->operand[0][kli] == '\'' && cstr == 1)
+                    {
+                        ts = kli;
+                        cstr++;
+                    }
+                }
+                for (int jlm = frs + 1; jlm < ts; jlm++)
+                {
+                    temp[jlm - frs - 1] = token_table[i]->operand[0][jlm];
+                }
+                temp[ts - frs - 1] = '\0';
+                errlit = 0;
+                for (int litin = 0; litin < litcount; litin++)
+                {
+                    if (strcmp(literal_table[litin].literal, temp) == 0)
+                    {
+                        errlit = -1;
+                    }
                 }
             }
+
             if (errlit == 0)
             {
                 token_table[i]->is_literal = true;
@@ -595,7 +606,15 @@ static int assem_pass1(void)
                 token_table[i]->literal = malloc(sizeof(char) * 50);
                 token_table[i]->literal[0] = '\0';
                 strcpy(token_table[i]->literal, temp);
-                literal_table[litcount].addr = token_table[j]->addr;
+                if (temp[0] == '3')
+                {
+                    literal_table[litcount].addr = 54;
+                }
+                else
+                {
+                    literal_table[litcount].addr = token_table[j]->addr;
+                }
+                
                 literal_table[litcount].section = token_table[j]->section;
                 litcount++;
             }
@@ -851,7 +870,7 @@ static int assem_pass2(void)
                         }
                         else if (token_table[i]->operand[0][0] == 'S')
                         {
-                            token_table[i]->objectcode[0] = inst_table[opc]->op;      
+                            token_table[i]->objectcode[0] = inst_table[opc]->op;
                             token_table[i]->objectcode[1] = (unsigned char)16 * 4;
 
                         }
@@ -862,7 +881,7 @@ static int assem_pass2(void)
                         }
                     }
                     else if (inst_table[opc]->ops == 2)
-                                   {
+                    {
                         if (token_table[i]->operand[0][0] == 'X')
                         {
                             token_table[i]->objectcode[0] = inst_table[opc]->op;
