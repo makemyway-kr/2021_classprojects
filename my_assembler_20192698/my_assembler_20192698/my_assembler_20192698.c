@@ -851,7 +851,7 @@ static int assem_pass2(void)
                         }
                         else if (token_table[i]->operand[0][0] == 'S')
                         {
-                            token_table[i]->objectcode[0] = inst_table[opc]->op;
+                            token_table[i]->objectcode[0] = inst_table[opc]->op;      
                             token_table[i]->objectcode[1] = (unsigned char)16 * 4;
 
                         }
@@ -862,7 +862,7 @@ static int assem_pass2(void)
                         }
                     }
                     else if (inst_table[opc]->ops == 2)
-                    {
+                                   {
                         if (token_table[i]->operand[0][0] == 'X')
                         {
                             token_table[i]->objectcode[0] = inst_table[opc]->op;
