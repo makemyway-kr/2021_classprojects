@@ -1,56 +1,54 @@
 #include <stdio.h>
 #include "person.h"
-//ÇÊ¿äÇÑ °æ¿ì Çì´õ ÆÄÀÏ°ú ÇÔ¼ö¸¦ Ãß°¡ÇÒ ¼ö ÀÖÀ½
+//í•„ìš”í•œ ê²½ìš° í—¤ë” íŒŒì¼ê³¼ í•¨ìˆ˜ë¥¼ ì¶”ê°€í•  ìˆ˜ ìˆìŒ
 
-// °úÁ¦ ¼³¸í¼­´ë·Î ±¸ÇöÇÏ´Â ¹æ½ÄÀº °¢ÀÚ ´Ù¸¦ ¼ö ÀÖÁö¸¸ ¾à°£ÀÇ Á¦¾àÀ» µÓ´Ï´Ù.
-// ·¹ÄÚµå ÆÄÀÏÀÌ ÆäÀÌÁö ´ÜÀ§·Î ÀúÀå °ü¸®µÇ±â ¶§¹®¿¡ »ç¿ëÀÚ ÇÁ·Î±×·¥¿¡¼­ ·¹ÄÚµå ÆÄÀÏ·ÎºÎÅÍ µ¥ÀÌÅÍ¸¦ ÀĞ°í ¾µ ¶§µµ
-// ÆäÀÌÁö ´ÜÀ§¸¦ »ç¿ëÇÕ´Ï´Ù. µû¶ó¼­ ¾Æ·¡ÀÇ µÎ ÇÔ¼ö°¡ ÇÊ¿äÇÕ´Ï´Ù.
-// 1. readPage(): ÁÖ¾îÁø ÆäÀÌÁö ¹øÈ£ÀÇ ÆäÀÌÁö µ¥ÀÌÅÍ¸¦ ÇÁ·Î±×·¥ »óÀ¸·Î ÀĞ¾î¿Í¼­ pagebuf¿¡ ÀúÀåÇÑ´Ù
-// 2. writePage(): ÇÁ·Î±×·¥ »óÀÇ pagebufÀÇ µ¥ÀÌÅÍ¸¦ ÁÖ¾îÁø ÆäÀÌÁö ¹øÈ£¿¡ ÀúÀåÇÑ´Ù
-// ·¹ÄÚµå ÆÄÀÏ¿¡¼­ ±âÁ¸ÀÇ ·¹ÄÚµå¸¦ ÀĞ°Å³ª »õ·Î¿î ·¹ÄÚµå¸¦ ¾²°Å³ª »èÁ¦ ·¹ÄÚµå¸¦ ¼öÁ¤ÇÒ ¶§³ª
-// À§ÀÇ readPage() ÇÔ¼ö¸¦ È£ÃâÇÏ¿© pagebuf¿¡ ÀúÀåÇÑ ÈÄ, ¿©±â¿¡ ÇÊ¿ä¿¡ µû¶ó¼­ »õ·Î¿î ·¹ÄÚµå¸¦ ÀúÀåÇÏ°Å³ª
-// »èÁ¦ ·¹ÄÚµå °ü¸®¸¦ À§ÇÑ ¸ŞÅ¸µ¥ÀÌÅÍ¸¦ ÀúÀåÇÕ´Ï´Ù. ±×¸®°í ³­ ÈÄ writePage() ÇÔ¼ö¸¦ È£ÃâÇÏ¿© ¼öÁ¤µÈ pagebuf¸¦
-// ·¹ÄÚµå ÆÄÀÏ¿¡ ÀúÀåÇÕ´Ï´Ù. ¹İµå½Ã ÆäÀÌÁö ´ÜÀ§·Î ÀĞ°Å³ª ½á¾ß ÇÕ´Ï´Ù.
+// ê³¼ì œ ì„¤ëª…ì„œëŒ€ë¡œ êµ¬í˜„í•˜ëŠ” ë°©ì‹ì€ ê°ì ë‹¤ë¥¼ ìˆ˜ ìˆì§€ë§Œ ì•½ê°„ì˜ ì œì•½ì„ ë‘¡ë‹ˆë‹¤.
+// ë ˆì½”ë“œ íŒŒì¼ì´ í˜ì´ì§€ ë‹¨ìœ„ë¡œ ì €ì¥ ê´€ë¦¬ë˜ê¸° ë•Œë¬¸ì— ì‚¬ìš©ì í”„ë¡œê·¸ë¨ì—ì„œ ë ˆì½”ë“œ íŒŒì¼ë¡œë¶€í„° ë°ì´í„°ë¥¼ ì½ê³  ì“¸ ë•Œë„
+// í˜ì´ì§€ ë‹¨ìœ„ë¥¼ ì‚¬ìš©í•©ë‹ˆë‹¤. ë”°ë¼ì„œ ì•„ë˜ì˜ ë‘ í•¨ìˆ˜ê°€ í•„ìš”í•©ë‹ˆë‹¤.
+// 1. readPage(): ì£¼ì–´ì§„ í˜ì´ì§€ ë²ˆí˜¸ì˜ í˜ì´ì§€ ë°ì´í„°ë¥¼ í”„ë¡œê·¸ë¨ ìƒìœ¼ë¡œ ì½ì–´ì™€ì„œ pagebufì— ì €ì¥í•œë‹¤
+// 2. writePage(): í”„ë¡œê·¸ë¨ ìƒì˜ pagebufì˜ ë°ì´í„°ë¥¼ ì£¼ì–´ì§„ í˜ì´ì§€ ë²ˆí˜¸ì— ì €ì¥í•œë‹¤
+// ë ˆì½”ë“œ íŒŒì¼ì—ì„œ ê¸°ì¡´ì˜ ë ˆì½”ë“œë¥¼ ì½ê±°ë‚˜ ìƒˆë¡œìš´ ë ˆì½”ë“œë¥¼ ì“°ê±°ë‚˜ ì‚­ì œ ë ˆì½”ë“œë¥¼ ìˆ˜ì •í•  ë•Œë‚˜
+// ìœ„ì˜ readPage() í•¨ìˆ˜ë¥¼ í˜¸ì¶œí•˜ì—¬ pagebufì— ì €ì¥í•œ í›„, ì—¬ê¸°ì— í•„ìš”ì— ë”°ë¼ì„œ ìƒˆë¡œìš´ ë ˆì½”ë“œë¥¼ ì €ì¥í•˜ê±°ë‚˜
+// ì‚­ì œ ë ˆì½”ë“œ ê´€ë¦¬ë¥¼ ìœ„í•œ ë©”íƒ€ë°ì´í„°ë¥¼ ì €ì¥í•©ë‹ˆë‹¤. ê·¸ë¦¬ê³  ë‚œ í›„ writePage() í•¨ìˆ˜ë¥¼ í˜¸ì¶œí•˜ì—¬ ìˆ˜ì •ëœ pagebufë¥¼
+// ë ˆì½”ë“œ íŒŒì¼ì— ì €ì¥í•©ë‹ˆë‹¤. ë°˜ë“œì‹œ í˜ì´ì§€ ë‹¨ìœ„ë¡œ ì½ê±°ë‚˜ ì¨ì•¼ í•©ë‹ˆë‹¤.
 //
-// ÁÖÀÇ: µ¥ÀÌÅÍ ÆäÀÌÁö·ÎºÎÅÍ ·¹ÄÚµå(»èÁ¦ ·¹ÄÚµå Æ÷ÇÔ)¸¦ ÀĞ°Å³ª ¾µ ¶§ ÆäÀÌÁö ´ÜÀ§·Î I/O¸¦ Ã³¸®ÇØ¾ß ÇÏÁö¸¸,
-// Çì´õ ·¹ÄÚµåÀÇ ¸ŞÅ¸µ¥ÀÌÅÍ¸¦ ÀúÀåÇÏ°Å³ª ¼öÁ¤ÇÏ´Â °æ¿ì ÆäÀÌÁö ´ÜÀ§·Î Ã³¸®ÇÏÁö ¾Ê°í Á÷Á¢ ·¹ÄÚµå ÆÄÀÏÀ» Á¢±ÙÇØ¼­ Ã³¸®ÇÑ´Ù.
+// ì£¼ì˜: ë°ì´í„° í˜ì´ì§€ë¡œë¶€í„° ë ˆì½”ë“œ(ì‚­ì œ ë ˆì½”ë“œ í¬í•¨)ë¥¼ ì½ê±°ë‚˜ ì“¸ ë•Œ í˜ì´ì§€ ë‹¨ìœ„ë¡œ I/Oë¥¼ ì²˜ë¦¬í•´ì•¼ í•˜ì§€ë§Œ,
+// í—¤ë” ë ˆì½”ë“œì˜ ë©”íƒ€ë°ì´í„°ë¥¼ ì €ì¥í•˜ê±°ë‚˜ ìˆ˜ì •í•˜ëŠ” ê²½ìš° í˜ì´ì§€ ë‹¨ìœ„ë¡œ ì²˜ë¦¬í•˜ì§€ ì•Šê³  ì§ì ‘ ë ˆì½”ë“œ íŒŒì¼ì„ ì ‘ê·¼í•´ì„œ ì²˜ë¦¬í•œë‹¤.
 
 //
-// ÆäÀÌÁö ¹øÈ£¿¡ ÇØ´çÇÏ´Â ÆäÀÌÁö¸¦ ÁÖ¾îÁø ÆäÀÌÁö ¹öÆÛ¿¡ ÀĞ¾î¼­ ÀúÀåÇÑ´Ù. ÆäÀÌÁö ¹öÆÛ´Â ¹İµå½Ã ÆäÀÌÁö Å©±â¿Í ÀÏÄ¡ÇØ¾ß ÇÑ´Ù.
+// í˜ì´ì§€ ë²ˆí˜¸ì— í•´ë‹¹í•˜ëŠ” í˜ì´ì§€ë¥¼ ì£¼ì–´ì§„ í˜ì´ì§€ ë²„í¼ì— ì½ì–´ì„œ ì €ì¥í•œë‹¤. í˜ì´ì§€ ë²„í¼ëŠ” ë°˜ë“œì‹œ í˜ì´ì§€ í¬ê¸°ì™€ ì¼ì¹˜í•´ì•¼ í•œë‹¤.
 //
 void readPage(FILE *fp, char *pagebuf, int pagenum)
 {
-
+	fseek(fp,16+(PAGE_SIZE*pagenum),SEEK_SET);
+	fread(pagebuf,PAGE_SIZE,1,fp);
 }
 
-//
-// ÆäÀÌÁö ¹öÆÛÀÇ µ¥ÀÌÅÍ¸¦ ÁÖ¾îÁø ÆäÀÌÁö ¹øÈ£¿¡ ÇØ´çÇÏ´Â ·¹ÄÚµå ÆÄÀÏÀÇ À§Ä¡¿¡ ÀúÀåÇÑ´Ù. 
-// ÆäÀÌÁö ¹öÆÛ´Â ¹İµå½Ã ÆäÀÌÁö Å©±â¿Í ÀÏÄ¡ÇØ¾ß ÇÑ´Ù.
-//
+
 void writePage(FILE *fp, const char *pagebuf, int pagenum)
 {
-
+	fseek(fp,16+(PAGE_SIZE*pagenum),SEEK_SET);
+	fwrite(pagebuf,PAGE_SIZE,1,fp);
 }
 
+
 //
-// »õ·Î¿î ·¹ÄÚµå¸¦ ÀúÀåÇÒ ¶§ ÅÍ¹Ì³Î·ÎºÎÅÍ ÀÔ·Â¹ŞÀº Á¤º¸¸¦ Person ±¸Á¶Ã¼¿¡ ¸ÕÀú ÀúÀåÇÏ°í, pack() ÇÔ¼ö¸¦ »ç¿ëÇÏ¿©
-// ·¹ÄÚµå ÆÄÀÏ¿¡ ÀúÀåÇÒ ·¹ÄÚµå ÇüÅÂ¸¦ recordbuf¿¡ ¸¸µç´Ù. 
+// ìƒˆë¡œìš´ ë ˆì½”ë“œë¥¼ ì €ì¥í•  ë•Œ í„°ë¯¸ë„ë¡œë¶€í„° ì…ë ¥ë°›ì€ ì •ë³´ë¥¼ Person êµ¬ì¡°ì²´ì— ë¨¼ì € ì €ì¥í•˜ê³ , pack() í•¨ìˆ˜ë¥¼ ì‚¬ìš©í•˜ì—¬
+// ë ˆì½”ë“œ íŒŒì¼ì— ì €ì¥í•  ë ˆì½”ë“œ í˜•íƒœë¥¼ recordbufì— ë§Œë“ ë‹¤. 
 // 
 void pack(char *recordbuf, const Person *p)
 {
-
+	sprintf(recordbuf, "%s#%s#%s#%s#%s#%s#", p -> id, p -> name, p -> age,p -> addr, p -> phone, p -> email);
+    memset(recordbuf + strlen(recordbuf), (char)0xFF, MAX_RECORD_SIZE - strlen(recordbuf));
 }
 
-// 
-// ¾Æ·¡ÀÇ unpack() ÇÔ¼ö´Â recordbuf¿¡ ÀúÀåµÇ¾î ÀÖ´Â ·¹ÄÚµå¸¦ ±¸Á¶Ã¼·Î º¯È¯ÇÒ ¶§ »ç¿ëÇÑ´Ù.
-//
-void unpack(const char *recordbuf, Person *p)
+void unpack(char *recordbuf, Person *p)
 {
-
+	sscanf(recordbuf, "%[^'#']#%[^'#']#%[^'#']#%[^'#']#%[^'#']#%[^'#']#",p-> id, p -> name, p -> age, p -> addr, p -> phone, p -> email);
 }
 
 //
-// »õ·Î¿î ·¹ÄÚµå¸¦ ÀúÀåÇÏ´Â ±â´ÉÀ» ¼öÇàÇÏ¸ç, ÅÍ¹Ì³Î·ÎºÎÅÍ ÀÔ·Â¹ŞÀº ÇÊµå°ªµéÀ» ±¸Á¶Ã¼¿¡ ÀúÀåÇÑ ÈÄ ¾Æ·¡ ÇÔ¼ö¸¦ È£ÃâÇÑ´Ù.
+// ìƒˆë¡œìš´ ë ˆì½”ë“œë¥¼ ì €ì¥í•˜ëŠ” ê¸°ëŠ¥ì„ ìˆ˜í–‰í•˜ë©°, í„°ë¯¸ë„ë¡œë¶€í„° ì…ë ¥ë°›ì€ í•„ë“œê°’ë“¤ì„ êµ¬ì¡°ì²´ì— ì €ì¥í•œ í›„ ì•„ë˜ í•¨ìˆ˜ë¥¼ í˜¸ì¶œí•œë‹¤.
 //
 void add(FILE *fp, const Person *p)
 {
@@ -58,24 +56,119 @@ void add(FILE *fp, const Person *p)
 }
 
 //
-// ÁÖ¹Î¹øÈ£¿Í ÀÏÄ¡ÇÏ´Â ·¹ÄÚµå¸¦ Ã£¾Æ¼­ »èÁ¦ÇÏ´Â ±â´ÉÀ» ¼öÇàÇÑ´Ù.
+// ì£¼ë¯¼ë²ˆí˜¸ì™€ ì¼ì¹˜í•˜ëŠ” ë ˆì½”ë“œë¥¼ ì°¾ì•„ì„œ ì‚­ì œí•˜ëŠ” ê¸°ëŠ¥ì„ ìˆ˜í–‰í•œë‹¤.
 //
 void delete(FILE *fp, const char *id)
 {
 
 }
-
 //
-// ÁÖ¾îÁø ·¹ÄÚµå ÆÄÀÏ(recordfp)À» ÀÌ¿ëÇÏ¿© ½ÉÇÃ ÀÎµ¦½º ÆÄÀÏ(idxfp)À» »ı¼ºÇÑ´Ù.
+// ì£¼ì–´ì§„ ë ˆì½”ë“œ íŒŒì¼(recordfp)ì„ ì´ìš©í•˜ì—¬ ì‹¬í”Œ ì¸ë±ìŠ¤ íŒŒì¼(idxfp)ì„ ìƒì„±í•œë‹¤.
 //
 void createIndex(FILE *idxfp, FILE *recordfp)
 {
+	int meta[4];
+	meta[0]=0;
+	meta[1]=0;
+	meta[2]=-1;
+	meta[3]=-1;
+	fseek(recordfp,0,SEEK_SET);
+	fread(&meta[0],sizeof(int),1,recordfp);
+	fread(&meta[1],sizeof(int),1,recordfp);
+	fread(&meta[2],sizeof(int),1,recordfp);
+	fread(&meta[3],sizeof(int),1,recordfp);
+	int *pageofrec=malloc(sizeof(int)*meta[0]);
+	int *recinpage=malloc(sizeof(int)*meta[1]);//ê° ë ˆì½”ë“œì˜ í˜ì´ì§€ ë‚´ ìˆœì„œ ì €ì¥ ë°°ì—´.
+	int pages=meta[1];
+	Person p[1000];
+	char*pagebuff=malloc(sizeof(char)*PAGE_SIZE);
+	for(int i=0;i<meta[0];i++)
+	{
+		memset(pagebuff,0xFF,PAGE_SIZE);
+		readPage(recordfp,pagebuff,i);
+		int recordsofpage=0;
+		memcpy(&recordsofpage,pagebuff,sizeof(int));
+		int *offsets=malloc(sizeof(int)*(recordsofpage));
+		int *lengths=malloc(sizeof(int)*recordsofpage);
+		for(int j=0;j<recordsofpage;j++)
+		{
+			memcpy(&offsets[j],pagebuff+(4*(j+1)),sizeof(int));
+			memcpy(&lengths[j],pagebuff+(8*(j+1)),sizeof(int));
+		}
+		for(int j=0;j<recordsofpage;j++)
+		{
+			char*recordbuff=malloc(sizeof(char)*lengths[j]+1);
+			memsest(recordbuff,0xFF,sizeof(recordbuff));
+			if(j==0)
+			{
+				memcpy(recordbuff,pagebuff+HEADER_AREA_SIZE,lengths[j]);
+			}
+			else
+			{
+				memcpy(recordbuff,pagebuff+HEADER_AREA_SIZE+lengths[j-1],lengths[j]);
+			}
+			recinpage[offsets[j]]=j;
+			pageofrec[offsets[j]]=i;
+			if(recordbuff[0]!='*')//ì‚­ì œ ë ˆì½”ë“œê°€ ì•„ë‹Œ ê²½ìš°
+			{
+				unpack(recordbuff,&p[offsets[j]]);
+			}
+			else//ì‚­ì œ ë ˆì½”ë“œ.
+			{
+				p[offsets[j]].id[0]='-';
+			}
+			free(recordbuff);
+			
+		}
+		free(offsets);
+		free(lengths);
+	}
+	//Personêµ¬ì¡°ì²´ì— ë‹´ì•„ì£¼ì—ˆìŒ ì—¬ê¸°ê¹Œì§€.
 
+	///
+	//ì´ì œ sortí•  ì°¨ë¡€
+	///
+	int *sorted_sequence=malloc(sizeof(int)*meta[1]);//ë ˆì½”ë“œë“¤ì˜ sortedëœ ìˆœì„œë¥¼ ë‚˜íƒ€ë‚´ì¤„ ë³„ë„ì˜ ë°°ì—´.
+	int temseq=0;
+	for(int i=0;i<meta[1];i++)
+	{
+		if(p[i].id[0]!='-')
+		{
+			sorted_sequence[temseq]=i;
+			temseq++;
+		}
+	}
+	for(int j=0;j<temseq;j++)
+	{
+		for(int k=0;k<temseq-j-1;k++)
+		{
+			long long int a=atoi(p[sorted_sequence[k]].id);
+			long long int b=atoi(p[sorted_sequence[k+1]].id);
+			if(a>b)
+			{
+				int temp=sorted_sequence[k+1];
+				sorted_sequence[k+1]=sorted_sequence[k];
+				sorted_sequence[k]=temp;
+			}
+		}
+	}
+	//sortedëœ ë°ë¡œ ì¸ë±ìŠ¤ íŒŒì¼ì— ì´ì œ ë„£ì–´ì¤„ ê²ƒì„.
+	fwrite(temseq,sizeof(int),1,idxfp);
+	for(int j=0;j<temseq;j++)
+	{
+		fwrite(p[sorted_sequence[j]].id,13,1,idxfp);
+		fwrite(pageofrec[sorted_sequence[j]],sizeof(int),1,idxfp);
+		fwrite(recinpage[sorted_sequence[j]],sizeof(int),1,idxfp);
+	}
+	free(sorted_sequence);
+	free(recinpage);
+	free(pageofrec);
+	free(pagebuff);
 }
 
 //
-// ÁÖ¾îÁø ½ÉÇÃ ÀÎµ¦½º ÆÄÀÏ(idxfp)À» ÀÌ¿ëÇÏ¿© ÁÖ¹Î¹øÈ£ Å°°ª°ú ÀÏÄ¡ÇÏ´Â ·¹ÄÚµåÀÇ ÁÖ¼Ò, Áï ÆäÀÌÁö ¹øÈ£¿Í ·¹ÄÚµå ¹øÈ£¸¦ Ã£´Â´Ù.
-// ÀÌ¶§, ¹İµå½Ã ÀÌÁø °Ë»ö ¾Ë°í¸®ÁòÀ» »ç¿ëÇÏ¿©¾ß ÇÑ´Ù.
+// ì£¼ì–´ì§„ ì‹¬í”Œ ì¸ë±ìŠ¤ íŒŒì¼(idxfp)ì„ ì´ìš©í•˜ì—¬ ì£¼ë¯¼ë²ˆí˜¸ í‚¤ê°’ê³¼ ì¼ì¹˜í•˜ëŠ” ë ˆì½”ë“œì˜ ì£¼ì†Œ, ì¦‰ í˜ì´ì§€ ë²ˆí˜¸ì™€ ë ˆì½”ë“œ ë²ˆí˜¸ë¥¼ ì°¾ëŠ”ë‹¤.
+// ì´ë•Œ, ë°˜ë“œì‹œ ì´ì§„ ê²€ìƒ‰ ì•Œê³ ë¦¬ì¦˜ì„ ì‚¬ìš©í•˜ì—¬ì•¼ í•œë‹¤.
 //
 void binarysearch(FILE *idxfp, const char *id, int *pageNum, int *recordNum)
 {
@@ -84,7 +177,21 @@ void binarysearch(FILE *idxfp, const char *id, int *pageNum, int *recordNum)
 
 int main(int argc, char *argv[])
 {
-	FILE *fp;  // ·¹ÄÚµå ÆÄÀÏÀÇ ÆÄÀÏ Æ÷ÀÎÅÍ
+	if(argv[1]=='i')
+	{
+		FILE *idxfp=fopen(argv[3],"wb");
+		FILE *recdfp=fopen(argv[2],"rb");
+		createIndex(idxfp,recdfp);
+		fclose(idxfp);
+		close(recdfp);
+	}
+	else if(argv[1]=='b')
+	{
+		int pageNum;
+		int recordNum;
+		//search
+		binarysearch(argv[3],argv[4],pageNum,recordNum);
+	}
 
 
 	return 0;
