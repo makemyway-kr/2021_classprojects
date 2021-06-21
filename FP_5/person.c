@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "person.h"
 //필요한 경우 헤더 파일과 함수를 추가할 수 있음
 
@@ -85,7 +87,7 @@ void createIndex(FILE *idxfp, FILE *recordfp)
 		for(int j=0;j<recordsofpage;j++)
 		{
 			char*recordbuff=malloc(sizeof(char)*lengths[j]+1);
-			memsest(recordbuff,0xFF,sizeof(recordbuff));
+			memset(recordbuff,0xFF,sizeof(recordbuff));
 			if(j==0)
 			{
 				memcpy(recordbuff,pagebuff+HEADER_AREA_SIZE,lengths[j]);
@@ -140,12 +142,12 @@ void createIndex(FILE *idxfp, FILE *recordfp)
 		}
 	}
 	//sorted된 데로 인덱스 파일에 이제 넣어줄 것임.
-	fwrite(temseq,sizeof(int),1,idxfp);
+	fwrite(&temseq,sizeof(int),1,idxfp);
 	for(int j=0;j<temseq;j++)
 	{
 		fwrite(p[sorted_sequence[j]].id,13,1,idxfp);
-		fwrite(pageofrec[sorted_sequence[j]],sizeof(int),1,idxfp);
-		fwrite(recinpage[sorted_sequence[j]],sizeof(int),1,idxfp);
+		fwrite(&pageofrec[sorted_sequence[j]],sizeof(int),1,idxfp);
+		fwrite(&recinpage[sorted_sequence[j]],sizeof(int),1,idxfp);
 	}
 	free(sorted_sequence);
 	free(recinpage);
@@ -208,7 +210,7 @@ void binarysearch(FILE *idxfp, const char *id, int *pageNum, int *recordNum)
 
 int main(int argc, char *argv[])
 {
-	if(argv[1]=='i')
+	if(*argv[1]=='i')
 	{
 		FILE *idxfp=fopen(argv[3],"wb");
 		FILE *recdfp=fopen(argv[2],"rb");
@@ -216,7 +218,7 @@ int main(int argc, char *argv[])
 		fclose(idxfp);
 		fclose(recdfp);
 	}
-	else if(argv[1]=='b')
+	else if(*argv[1]=='b')
 	{
 		int pageNum;
 		int recordNum;
