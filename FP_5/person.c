@@ -46,25 +46,12 @@ void unpack(char *recordbuf, Person *p)
 {
 	sscanf(recordbuf, "%[^'#']#%[^'#']#%[^'#']#%[^'#']#%[^'#']#%[^'#']#",p-> id, p -> name, p -> age, p -> addr, p -> phone, p -> email);
 }
-
-//
-// 새로운 레코드를 저장하는 기능을 수행하며, 터미널로부터 입력받은 필드값들을 구조체에 저장한 후 아래 함수를 호출한다.
-//
-void add(FILE *fp, const Person *p)
+void indexunpack(char *recordbuff,Person *p,int *page,int *recnum)
 {
-
+	memcpy(p->id,recordbuff,13);
+	memcpy(page,recordbuff+13,4);
+	memcpy(recnum,recordbuff+17,4);
 }
-
-//
-// 주민번호와 일치하는 레코드를 찾아서 삭제하는 기능을 수행한다.
-//
-void delete(FILE *fp, const char *id)
-{
-
-}
-//
-// 주어진 레코드 파일(recordfp)을 이용하여 심플 인덱스 파일(idxfp)을 생성한다.
-//
 void createIndex(FILE *idxfp, FILE *recordfp)
 {
 	int meta[4];
@@ -170,9 +157,53 @@ void createIndex(FILE *idxfp, FILE *recordfp)
 // 주어진 심플 인덱스 파일(idxfp)을 이용하여 주민번호 키값과 일치하는 레코드의 주소, 즉 페이지 번호와 레코드 번호를 찾는다.
 // 이때, 반드시 이진 검색 알고리즘을 사용하여야 한다.
 //
+int notfound=0;//탐색 성공 여부 표시 변수
+int time=0;
 void binarysearch(FILE *idxfp, const char *id, int *pageNum, int *recordNum)
 {
-
+	int numbofrec;
+	fread(&numbofrec,sizeof(int),1,idxfp);
+	Person search;
+	int low=0;
+	int high=numbofrec;
+	int tosearch;
+	char* recbuff=malloc(sizeof(char)*22);
+	memset(recbuff,0xFF,22);
+	long long int toid=atoi(id);
+	int temppagenum=0;
+	int temprecordnum=0;
+	while(1)
+	{
+		fseek(idxfp,1+(21*tosearch),SEEK_SET);
+		fread(recbuff,21,1,idxfp);
+		indexunpack(recbuff,&search,&temppagenum,&temprecordnum);
+		time+=1;
+		long long int sid=atoi(search.id);
+		if(strcmp(search.id,id)==0)
+		{
+			*pageNum=temppagenum;
+			*recordNum=temprecordnum;
+			break;
+		}
+		else
+		{
+			
+			if(sid<toid)
+			{
+				high=tosearch-1;
+			}
+			else if(sid>toid)
+			{
+				low=tosearch+1;
+			}
+			tosearch=(low+high)/2;
+		}
+		if(low>high)
+		{
+			notfound=1;
+			break;
+		}
+	}
 }
 
 int main(int argc, char *argv[])
@@ -183,14 +214,51 @@ int main(int argc, char *argv[])
 		FILE *recdfp=fopen(argv[2],"rb");
 		createIndex(idxfp,recdfp);
 		fclose(idxfp);
-		close(recdfp);
+		fclose(recdfp);
 	}
 	else if(argv[1]=='b')
 	{
 		int pageNum;
 		int recordNum;
+		Person searched;
 		//search
-		binarysearch(argv[3],argv[4],pageNum,recordNum);
+		FILE *recdfp=fopen(argv[2],"rb");
+		FILE *idxfp=fopen(argv[3],"rb");
+		binarysearch(idxfp,argv[4],&pageNum,&recordNum);
+		if(notfound==0)
+		{
+			char *recordbuff=malloc(sizeof(char)*MAX_RECORD_SIZE);
+			memset(recordbuff,0xFF,MAX_RECORD_SIZE);
+			char recsize[4];
+			int rsize[10];
+			for(int i=0;i<=recordNum;i++)
+			{
+				fseek(recdfp,16+(PAGE_SIZE*pageNum)+(8*(i+1)),SEEK_SET);
+				fread(recsize,sizeof(int),1,recdfp);
+				rsize[i]=atoi(recsize);
+			}
+			int skip=0;
+			for(int i=0;i<recordNum;i++)
+			{
+				skip+=rsize[i];
+			}
+			fseek(recdfp,16+(PAGE_SIZE*pageNum)+HEADER_AREA_SIZE+skip,SEEK_SET);
+			fread(recordbuff,sizeof(char)*(rsize[recordNum]),1,recdfp);
+			unpack(recordbuff,&searched);
+			printf("#reads:%d\n",time);
+			printf("name=%s\n",searched.name);
+			printf("age=%d\n",atoi(searched.age));
+			printf("addr=%s\n",searched.addr);
+			printf("phone=%s\n",searched.phone);
+			printf("email=%s",searched.email);
+		}
+		else
+		{
+			printf("#reads:%d\n",time);
+			printf("no persons");
+		}
+		fclose(recdfp);
+		fclose(idxfp);
 	}
 
 
