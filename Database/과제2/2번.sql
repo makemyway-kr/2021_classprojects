@@ -1,0 +1,1 @@
+Select customer_name from (customer natural join borrower) join (loan_branch natural join branch) on borrower.loan_number=loan_branch.loan_number and customer.customer_city=branch.branch_city;

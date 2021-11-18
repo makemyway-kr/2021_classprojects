@@ -1,0 +1,1 @@
+Select branch_name,assets from branch where assets>(Select avg(assets) from branch);

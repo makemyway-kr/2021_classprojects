@@ -1,0 +1,1 @@
+Select customer_name from Customer where customer_city ="서울";

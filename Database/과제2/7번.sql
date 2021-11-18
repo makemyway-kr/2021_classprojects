@@ -1,0 +1,1 @@
+Select branch_name from branch where branch_city='부산' and assets>(select min(assets)from branch);

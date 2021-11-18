@@ -1,0 +1,1 @@
+Select sum(loan.amount) from customer natural join borrower natural join loan where customer.customer_name like "김%";
