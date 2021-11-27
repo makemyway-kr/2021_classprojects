@@ -1,0 +1,2 @@
+CREATE VIEW only_account_customer as SELECT Customer.customer_name,Customer.customer_city FROM customer WHERE customer.customer_id NOT IN (select customer_id FROM borrower) AND customer.customer_id IN (select
+customer_id FROM depositor);

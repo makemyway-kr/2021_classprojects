@@ -1,0 +1,1 @@
+SELECT Customer_name from only_account_customer WHERE Customer_city="서울";

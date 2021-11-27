@@ -1,0 +1,1 @@
+CREATE VIEW customer_avg_balance as SELECT customer_id,customer_name,avg(amount) as avg_balance from Customer natural join depositor natural join account group by customer_id; 

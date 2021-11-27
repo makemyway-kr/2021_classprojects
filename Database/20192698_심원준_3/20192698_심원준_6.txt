@@ -1,0 +1,1 @@
+SELECT customer_id,avg_balance from customer_avg_balance where customer_name="홍길동";

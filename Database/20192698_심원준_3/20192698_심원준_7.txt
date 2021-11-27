@@ -1,0 +1,9 @@
+DELIMITER $$
+CREATE FUNCTION get_loan_counts(customer_id VARCHAR(100)) 
+	RETURNS INTEGER
+BEGIN 
+	DECLARE counter integer;
+	SELECT count(loan_number) from Customer natural join borrower natural join loan where Customer.customer_id=customer_id into counter;
+	RETURN counter;
+END$$
+DELIMITER ;
